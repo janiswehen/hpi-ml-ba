@@ -49,7 +49,7 @@ class FullUNet(nn.Module):
             x = self.pool(x)
         
         x = self.bottleneck(x)
-        skip_connections = reversed(skip_connections)
+        skip_connections = skip_connections[::-1]
         
         for idx in range(0, len(self.ups), 2):
             x = self.ups[idx](x)
@@ -63,10 +63,40 @@ class FullUNet(nn.Module):
         
         return self.final_conv(x)
 
+class PaddedUNet(nn.Module):
+    def __init__(self, unet):
+        super(PaddedUNet, self).__init__()
+        self.unet = unet
+    
+    def forward(self, x):
+        # Compute padding sizes
+        depth = len(self.unet.downs)
+        padding = [(0, (d % 2**depth != 0) * (2**depth - d % 2**depth)) for d in x.shape[-3:]]
+        padding = [item for sublist in padding[::-1] for item in sublist]  # flatten the list
+
+        # Pad input and pass it through the UNet
+        x_padded = nn.functional.pad(x, padding)
+        out_padded = self.unet(x_padded)
+
+        # Remove padding from the output
+        i = [slice(None)] * len(x.shape)  # slices to keep everything
+        i[-3:] = [slice(0, d) for d in x.shape[-3:]]  # slices to remove padding from last 3 dims
+        out = out_padded[i]
+
+        return out
+
 def test():
-    x = torch.randn((3, 1, 160, 160, 160))
-    model = FullUNet(in_chanels=1, out_chanels=1)
-    preds = model(x)
+    batch_size = 3
+    input_chanels = 3
+    output_chanels = 3
+    
+    x = torch.randn((batch_size, input_chanels, 240, 240, 32))
+    
+    model = FullUNet(in_chanels=input_chanels, out_chanels=output_chanels)
+    paddedModel = PaddedUNet(model)
+    
+    preds = paddedModel(x)
+    
     print(preds.shape)
     print(x.shape)
 
