@@ -45,7 +45,7 @@ class BratsDataset(data.Dataset):
         return scan, label
 
     def one_hot_encode(self, label):
-        classes = np.array([1, 2, 3])
+        classes = np.array([0, 1, 2, 3])
         one_hot = (classes == label[0,...,None]).astype(np.float32)
         one_hot = np.moveaxis(one_hot, -1, 0)
         return one_hot
@@ -57,3 +57,4 @@ if __name__ == '__main__':
     scan, label = dataset[0]
     print(np.min(scan), np.max(scan))
     print(np.min(label), np.max(label))
+    print(dataset[0][0].shape, dataset[0][1].shape)

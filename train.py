@@ -8,6 +8,7 @@ import os
 
 from unet_3d import UNet3d
 from dataset import BratsDataset
+from monai.losses import DiceLoss
 
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -66,7 +67,7 @@ def main():
     model = UNet3d(in_channels=4, out_channels=3).to(DEVICE)
     try_load_checkpoint(model, config)
 
-    loss_fn = nn.BCEWithLogitsLoss()
+    loss_fn = DiceLoss(softmax=True, include_background=False)
     optimizer = optim.Adam(model.parameters(), lr=config['learning_rate'])
 
     scalar = torch.cuda.amp.GradScaler()
