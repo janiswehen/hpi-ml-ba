@@ -25,7 +25,10 @@ class BratsDataset(data.Dataset):
             label = np.expand_dims(label, axis=0) # convert from (W, H, D) to (1, W, H, D)
             
             self.data.append((img, label))
-            print(f'Dataset loading: {index+1}/{len(self.data_json["training"])}', end='\r')
+            if index == len(self.data_json['training']) - 1:
+                print(f'Dataset loading: {index+1}/{len(self.data_json["training"])}')
+            else:
+                print(f'Dataset loading: {index+1}/{len(self.data_json["training"])}', end='\r')
     
     def __len__(self):
         return len(self.data_json['training'])

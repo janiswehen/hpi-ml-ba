@@ -11,9 +11,7 @@ from dataset import BratsDataset
 
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-def train_fn(loader: DataLoader, model: nn.Module, optimizer: optim.Optimizer, loss_fn, scalar: torch.cuda.amp.GradScaler):
-    loop = tqdm.tqdm(loader)
-    
+def train_fn(loader: DataLoader, model: nn.Module, optimizer: optim.Optimizer, loss_fn, scalar: torch.cuda.amp.GradScaler, loop: tqdm.tqdm):
     for batch_idx, (data, targets) in enumerate(loop):
         data = data.half().to(device=DEVICE)
         targets = targets.half().to(device=DEVICE)
@@ -74,7 +72,8 @@ def main():
     scalar = torch.cuda.amp.GradScaler()
 
     for epoch in range(config['n_epochs']):
-        train_fn(loader, model, optimizer, loss_fn, scalar)
+        loop = tqdm.tqdm(loader, desc=f"Epoch {epoch + 1}/{config['n_epochs']}")
+        train_fn(loader, model, optimizer, loss_fn, scalar, loop)
         if epoch % 10 == 9:
             torch.save(model.state_dict(), f'checkpoints/{run_name}/epoch_{epoch}.pth')
     torch.save(model.state_dict(), f'final/{run_name}_unet3d_weights.pth')
