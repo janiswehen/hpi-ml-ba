@@ -8,4 +8,4 @@ load_model: True
 dataset_dir: "/dhc/home/janis.wehen/data/Task01_BrainTumour/"
 checkpoint_path: null
 wandb: True
-wandb_prediction_log_count: 5
+wandb_prediction_log_count: 4

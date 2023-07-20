@@ -1,3 +1,9 @@
+import os
+
+abspath = os.path.abspath(__file__)
+dname = os.path.dirname(abspath)
+os.chdir(dname)
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -5,7 +11,6 @@ import tqdm
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
 import yaml
-import os
 import wandb
 
 from unet_3d import UNet3d
