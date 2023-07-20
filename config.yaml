@@ -1,4 +1,4 @@
-run_name: "test_run"
+run_name: "test"
 learning_rate: 0.0001
 batch_size: 2
 n_epochs: 5
@@ -7,3 +7,5 @@ pin_memory: True
 load_model: True
 dataset_dir: "/dhc/home/janis.wehen/data/Task01_BrainTumour/"
 checkpoint_path: null
+wandb: True
+wandb_prediction_log_count: 5

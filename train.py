@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 import tqdm
 from torch.utils.data import DataLoader
+from torch.utils.data import Dataset
 import yaml
 import os
 import wandb
@@ -13,7 +14,7 @@ from monai.losses import DiceLoss
 
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-def train_fn(loader: DataLoader, model: nn.Module, optimizer: optim.Optimizer, loss_fn, scalar: torch.cuda.amp.GradScaler, loop: tqdm.tqdm):
+def train_fn(loader: DataLoader, model: nn.Module, optimizer: optim.Optimizer, loss_fn, scalar: torch.cuda.amp.GradScaler, loop: tqdm.tqdm, log_wandb: bool):
     for batch_idx, (data, targets) in enumerate(loop):
         data = data.half().to(device=DEVICE)
         targets = targets.half().to(device=DEVICE)
@@ -31,7 +32,8 @@ def train_fn(loader: DataLoader, model: nn.Module, optimizer: optim.Optimizer, l
         
         # update tqdm loop
         loop.set_postfix(loss=loss.item())
-        wandb.log({"dice-loss": loss.item()})
+        if log_wandb:
+            wandb.log({"dice-loss": loss.item()})
 
 def try_load_checkpoint(model: nn.Module, config):
     try:
@@ -43,12 +45,41 @@ def try_load_checkpoint(model: nn.Module, config):
     except Exception as e:
         print('Unable to load checkpoint. {}'.format(e))
 
+def log_prediction(model: nn.Module, dataset: Dataset, slice=90, n_predictions=5):
+    with torch.cuda.amp.autocast():
+        wandb_images = []
+        for i in range(n_predictions):
+            scan, ground_trouth = dataset[i]
+            pred = model(torch.tensor(scan).half().unsqueeze(0).to(DEVICE))[0]
+            
+            class_labels = dataset.class_labels
+            
+            ground_trouth = torch.tensor(ground_trouth).argmax(dim=0)
+            pred = pred.argmax(dim=0)
+            wandb_images.append(wandb.Image(
+                scan[0, :, :, slice],
+                caption=f"Scan {i}",
+                masks={
+                    "prediction": {
+                        "mask_data": pred[:, :, slice].cpu().numpy(),
+                        "class_labels": class_labels,
+                    },
+                    "ground-trouth": {
+                        "mask_data": ground_trouth[:, :, slice].cpu().numpy(),
+                        "class_labels": class_labels,
+                    },
+                }
+            ))
+        wandb.log({"predictions": wandb_images})
+
 def main():
     config = {}
     with open("config.yaml", "r") as stream:
         config = yaml.safe_load(stream)
     run_name = config['run_name']
-    wandb.init(project="Full-3D-UNet", name=run_name, config=config)
+    config['device'] = DEVICE
+    if config['wandb'] == True:
+        wandb.init(project="Full-3D-UNet", name=run_name, config=config)
 
     # check if weights folders exists
     if os.path.isdir(f'final') == False:
@@ -68,7 +99,8 @@ def main():
     )
 
     model = UNet3d(in_channels=4, out_channels=4).to(DEVICE)
-    wandb.watch(model, log="all")
+    if config['wandb']:
+        wandb.watch(model, log="all")
     try_load_checkpoint(model, config)
 
     loss_fn = DiceLoss(softmax=True, include_background=False)
@@ -76,11 +108,16 @@ def main():
 
     scalar = torch.cuda.amp.GradScaler()
 
+
+    if config['wandb']:
+        log_prediction(model, dataset, n_predictions=config['wandb_prediction_log_count'])
     for epoch in range(config['n_epochs']):
         loop = tqdm.tqdm(loader, desc=f"Epoch {epoch + 1}/{config['n_epochs']}")
-        train_fn(loader, model, optimizer, loss_fn, scalar, loop)
-        if epoch % 10 == 9:
+        train_fn(loader, model, optimizer, loss_fn, scalar, loop, config['wandb'])
+        if epoch % 5 == 4:
             torch.save(model.state_dict(), f'checkpoints/{run_name}/epoch_{epoch}.pth')
+        if config['wandb']:
+            log_prediction(model, dataset, n_predictions=config['wandb_prediction_log_count'])
 
     torch.save(model.state_dict(), f'final/{run_name}_unet3d_weights.pth')
 

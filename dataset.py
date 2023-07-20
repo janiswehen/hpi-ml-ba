@@ -13,6 +13,11 @@ class BratsDataset(data.Dataset):
         with open(os.path.join(self.dataset_dir, 'dataset.json')) as f:
             self.data_json = json.load(f)
         self.data = []
+        self.class_labels = {
+            1: self.data_json['labels']['1'],
+            2: self.data_json['labels']['2'],
+            3: self.data_json['labels']['3']
+        }
         for index in range(len(self.data_json['training'])):
             image_path = os.path.join(self.dataset_dir, self.data_json['training'][index]['image'])
             img = nib.load(image_path).get_fdata()
