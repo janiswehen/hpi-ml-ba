@@ -5,6 +5,7 @@ import tqdm
 from torch.utils.data import DataLoader
 import yaml
 import os
+import wandb
 
 from unet_3d import UNet3d
 from dataset import BratsDataset
@@ -30,6 +31,7 @@ def train_fn(loader: DataLoader, model: nn.Module, optimizer: optim.Optimizer, l
         
         # update tqdm loop
         loop.set_postfix(loss=loss.item())
+        wandb.log({"dice-loss": loss.item()})
 
 def try_load_checkpoint(model: nn.Module, config):
     try:
@@ -46,6 +48,7 @@ def main():
     with open("config.yaml", "r") as stream:
         config = yaml.safe_load(stream)
     run_name = config['run_name']
+    wandb.init(project="Full-3D-UNet", name=run_name, config=config)
 
     # check if weights folders exists
     if os.path.isdir(f'final') == False:
@@ -64,7 +67,8 @@ def main():
         shuffle=True,
     )
 
-    model = UNet3d(in_channels=4, out_channels=3).to(DEVICE)
+    model = UNet3d(in_channels=4, out_channels=4).to(DEVICE)
+    wandb.watch(model, log="all")
     try_load_checkpoint(model, config)
 
     loss_fn = DiceLoss(softmax=True, include_background=False)
@@ -77,6 +81,7 @@ def main():
         train_fn(loader, model, optimizer, loss_fn, scalar, loop)
         if epoch % 10 == 9:
             torch.save(model.state_dict(), f'checkpoints/{run_name}/epoch_{epoch}.pth')
+
     torch.save(model.state_dict(), f'final/{run_name}_unet3d_weights.pth')
 
 if __name__ == '__main__':

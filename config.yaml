@@ -2,7 +2,7 @@ run_name: "test_run"
 learning_rate: 0.0001
 batch_size: 2
 n_epochs: 5
-n_workers: 1
+n_workers: 0
 pin_memory: True
 load_model: True
 dataset_dir: "/dhc/home/janis.wehen/data/Task01_BrainTumour/"
