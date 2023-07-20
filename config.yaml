@@ -1,3 +1,4 @@
+run_name: "test2"
 learning_rate: 0.0001
 batch_size: 2
 n_epochs: 5
@@ -5,4 +6,4 @@ n_workers: 1
 pin_memory: True
 load_model: True
 dataset_dir: "/dhc/home/janis.wehen/data/Task01_BrainTumour/"
-model_path: "test-UNet.pt"
+checkpoint_path: "final/test2_unet3d_weights.pth"
