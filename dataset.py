@@ -12,42 +12,34 @@ class BratsDataset(data.Dataset):
         
         with open(os.path.join(self.dataset_dir, 'dataset.json')) as f:
             self.data_json = json.load(f)
-        self.data = []
+        self.data = self.data_json['training']
         self.class_labels = {
             1: self.data_json['labels']['1'],
             2: self.data_json['labels']['2'],
             3: self.data_json['labels']['3']
         }
-        for index in range(len(self.data_json['training'])):
-            image_path = os.path.join(self.dataset_dir, self.data_json['training'][index]['image'])
-            img = nib.load(image_path).get_fdata()
-            img.astype(np.float32)
-            img = np.moveaxis(img, -1, 0) # convert from (W, H, D, M) to (M, W, H, D)
-            
-            label_path = os.path.join(self.dataset_dir, self.data_json['training'][index]['label'])
-            label = nib.load(label_path).get_fdata()
-            label.astype(np.float32)
-            label = np.expand_dims(label, axis=0) # convert from (W, H, D) to (1, W, H, D)
-            
-            self.data.append((img, label))
-            if index == len(self.data_json['training']) - 1:
-                print(f'Dataset loading: {index+1}/{len(self.data_json["training"])}')
-            else:
-                print(f'Dataset loading: {index+1}/{len(self.data_json["training"])}', end='\r')
     
     def __len__(self):
-        return len(self.data_json['training'])
+        return len(self.data)
     
     def __getitem__(self, index):
-        scan, label = self.data[index]
-        
-        mean = np.mean(scan)
-        std = np.std(scan)
-        scan = (scan - mean) / std
-        
+        image_path = os.path.join(self.dataset_dir, self.data[index]['image'])
+        img = nib.load(image_path).get_fdata()
+        img.astype(np.float32)
+        img = np.moveaxis(img, -1, 0)  # convert from (W, H, D, M) to (M, W, H, D)
+
+        label_path = os.path.join(self.dataset_dir, self.data[index]['label'])
+        label = nib.load(label_path).get_fdata()
+        label.astype(np.float32)
+        label = np.expand_dims(label, axis=0)  # convert from (W, H, D) to (1, W, H, D)
+
+        mean = np.mean(img)
+        std = np.std(img)
+        img = (img - mean) / std
+
         label = self.one_hot_encode(label)
-        
-        return scan, label
+
+        return img, label
 
     def one_hot_encode(self, label):
         classes = np.array([0, 1, 2, 3])
