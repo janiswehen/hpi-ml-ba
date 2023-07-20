@@ -1,4 +1,6 @@
 import os
+import time
+from datetime import timedelta
 
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
@@ -114,11 +116,16 @@ def main():
     if config['logging']['enabled']:
         log_prediction(model, dataset, n_predictions=config['logging']['prediction_log_count'])
     for epoch in range(config['training']['n_epochs']):
+        start_time = time.time()
         loop = tqdm.tqdm(loader, desc=f"Epoch {epoch + 1}/{config['training']['n_epochs']}")
         train_fn(loader, model, optimizer, loss_fn, scalar, loop, config['logging']['enabled'])
+        end_time = time.time()
+        elapsed_time = end_time - start_time
         torch.save(model.state_dict(), f'checkpoints/{run_name}/epoch_{epoch}.pth')
         if config['logging']['enabled']:
             log_prediction(model, dataset, n_predictions=config['logging']['prediction_log_count'])
+            wandb.log({"epoch_time_seconds": elapsed_time})
+            wandb.log({"epoch_time": str(timedelta(seconds=elapsed_time))})
 
     torch.save(model.state_dict(), f'final/{run_name}_unet3d_weights.pth')
 
