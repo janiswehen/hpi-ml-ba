@@ -40,13 +40,10 @@ def train_fn(loader: DataLoader, model: nn.Module, optimizer: optim.Optimizer, l
         if log_wandb:
             wandb.log({"dice-loss": loss.item()})
 
-def try_load_checkpoint(model: nn.Module, config):
+def try_load_checkpoint(model: nn.Module, checkpoint_path: str):
     try:
-        #check if config has checkpoint path
-        if config['checkpoint_path'] is None:
-            return
-        model.load_state_dict(torch.load(config['checkpoint_path']))
-        print('Loaded checkpoint from {}'.format(config['checkpoint_path']))
+        model.load_state_dict(torch.load(checkpoint_path))
+        print('Loaded checkpoint from {}'.format(checkpoint_path))
     except Exception as e:
         print('Unable to load checkpoint. {}'.format(e))
 
@@ -80,10 +77,9 @@ def log_prediction(model: nn.Module, dataset: Dataset, slice=90, n_predictions=5
 def main():
     config = {}
     with open("config.yaml", "r") as stream:
-        config = yaml.safe_load(stream)
-    run_name = config['run_name']
-    config['device'] = DEVICE
-    if config['wandb'] == True:
+        config = yaml.safe_load(stream)['run']
+    run_name = config['name']
+    if config['logging']['enabled'] == True:
         wandb.init(project="Full-3D-UNet", name=run_name, config=config)
 
     # check if weights folders exists
@@ -94,35 +90,35 @@ def main():
     if os.path.isdir(f'checkpoints/{run_name}') == False:
         os.mkdir(f'checkpoints/{run_name}')
 
-    dataset = BratsDataset(config['dataset_dir'])
+    dataset = BratsDataset(config['data_loading']['path'])
 
     loader = DataLoader(
         dataset,
-        batch_size=config['batch_size'],
-        num_workers=config['n_workers'],
+        batch_size=config['data_loading']['batch_size'],
+        num_workers=config['data_loading']['n_workers'],
         shuffle=True,
     )
 
     model = UNet3d(in_channels=4, out_channels=4).to(DEVICE)
-    if config['wandb']:
+    if config['logging']['enabled']:
         wandb.watch(model, log="all")
-    try_load_checkpoint(model, config)
+    if config['model_loading']['enabled']:
+        try_load_checkpoint(model, config['model_loading']['path'])
 
     loss_fn = DiceLoss(softmax=True, include_background=False)
-    optimizer = optim.Adam(model.parameters(), lr=config['learning_rate'])
+    optimizer = optim.Adam(model.parameters(), lr=config['training']['learning_rate'])
 
     scalar = torch.cuda.amp.GradScaler()
 
 
-    if config['wandb']:
-        log_prediction(model, dataset, n_predictions=config['wandb_prediction_log_count'])
-    for epoch in range(config['n_epochs']):
-        loop = tqdm.tqdm(loader, desc=f"Epoch {epoch + 1}/{config['n_epochs']}")
-        train_fn(loader, model, optimizer, loss_fn, scalar, loop, config['wandb'])
-        if epoch % 5 == 4:
-            torch.save(model.state_dict(), f'checkpoints/{run_name}/epoch_{epoch}.pth')
-        if config['wandb']:
-            log_prediction(model, dataset, n_predictions=config['wandb_prediction_log_count'])
+    if config['logging']['enabled']:
+        log_prediction(model, dataset, n_predictions=config['logging']['prediction_log_count'])
+    for epoch in range(config['training']['n_epochs']):
+        loop = tqdm.tqdm(loader, desc=f"Epoch {epoch + 1}/{config['training']['n_epochs']}")
+        train_fn(loader, model, optimizer, loss_fn, scalar, loop, config['logging']['enabled'])
+        torch.save(model.state_dict(), f'checkpoints/{run_name}/epoch_{epoch}.pth')
+        if config['logging']['enabled']:
+            log_prediction(model, dataset, n_predictions=config['logging']['prediction_log_count'])
 
     torch.save(model.state_dict(), f'final/{run_name}_unet3d_weights.pth')
 

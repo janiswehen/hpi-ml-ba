@@ -1,11 +1,15 @@
-run_name: "test"
-learning_rate: 0.0001
-batch_size: 2
-n_epochs: 5
-n_workers: 0
-pin_memory: True
-load_model: True
-dataset_dir: "/dhc/home/janis.wehen/data/Task01_BrainTumour/"
-checkpoint_path: null
-wandb: True
-wandb_prediction_log_count: 4
+run:
+  name: "training_run_1"
+  data_loading:
+    path: "/dhc/home/janis.wehen/data/Task01_BrainTumour/"
+    n_workers: 4
+    batch_size: 2
+  model_loading:
+    enabled: True
+    path: "final/training_run_test_unet3d_weights.pth"
+  training:
+    n_epochs: 200
+    learning_rate: 0.0001
+  logging:
+    enabled: True
+    prediction_log_count: 10
