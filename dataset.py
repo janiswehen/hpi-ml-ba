@@ -42,9 +42,11 @@ class BratsDataset(data.Dataset):
         return img, label
 
     def one_hot_encode(self, label):
-        classes = np.array([0, 1, 2, 3])
-        one_hot = (classes == label[0,...,None]).astype(np.float32)
-        one_hot = np.moveaxis(one_hot, -1, 0)
+        one_hot = np.zeros((4, *label.shape[1:]), dtype=np.float32)
+        one_hot[0] = label[0] == 0
+        one_hot[1] = label[0] >= 1
+        one_hot[2] = label[0] >= 2
+        one_hot[3] = label[0] >= 3
         return one_hot
 
 if __name__ == '__main__':

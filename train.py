@@ -1,6 +1,7 @@
 import os
 import time
 from datetime import timedelta
+import numpy as np
 
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
@@ -58,23 +59,31 @@ def log_prediction(model: nn.Module, dataset: Dataset, slice=90, n_predictions=5
             
             class_labels = dataset.class_labels
             
-            ground_trouth = torch.tensor(ground_trouth).argmax(dim=0)
-            pred = pred.argmax(dim=0)
+            ground_trouth = convert_from_one_hot(ground_trouth)[:, :, slice]
+            pred = convert_from_one_hot(pred.cpu())[:, :, slice]
             wandb_images.append(wandb.Image(
                 scan[0, :, :, slice],
                 caption=f"Scan {i}",
                 masks={
                     "prediction": {
-                        "mask_data": pred[:, :, slice].cpu().numpy(),
+                        "mask_data": pred,
                         "class_labels": class_labels,
                     },
                     "ground-trouth": {
-                        "mask_data": ground_trouth[:, :, slice].cpu().numpy(),
+                        "mask_data": ground_trouth,
                         "class_labels": class_labels,
                     },
                 }
             ))
         wandb.log({"predictions": wandb_images})
+
+def convert_from_one_hot(one_hot):
+    label = np.zeros(one_hot.shape[1:], dtype=np.float32)
+
+    label[one_hot[1] == 1] = 1
+    label[one_hot[2] == 1] = 2
+    label[one_hot[3] == 1] = 3
+    return label
 
 def main():
     config = {}
