@@ -1,15 +1,15 @@
 run:
-  name: "training_run_1"
+  name: "training_test"
   data_loading:
     path: "/dhc/home/janis.wehen/data/Task01_BrainTumour/"
-    n_workers: 4
+    n_workers: 0
     batch_size: 2
   model_loading:
-    enabled: True
+    enabled: False
     path: "final/training_run_test_unet3d_weights.pth"
   training:
-    n_epochs: 200
+    n_epochs: 2
     learning_rate: 0.0001
   logging:
     enabled: True
-    prediction_log_count: 10
+    prediction_log_count: 5
