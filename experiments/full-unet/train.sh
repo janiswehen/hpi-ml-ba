@@ -11,9 +11,9 @@
 #SBATCH --output=logs/full-unet-train_%j.log # %j is job id
 
 user="janis.wehen"
-condaenv="full-unet"
-script_path="/dhc/home/janis.wehen/ba/models/Full-3D-UNet/train.py"
-log_path="/dhc/home/janis.wehen/ba/models/Full-3D-UNet/training_run.log"
+condaenv="ba"
+script_path="/dhc/home/janis.wehen/ba/models/bachelor-project/experiments/full-unet/train.py"
+log_path="/dhc/home/janis.wehen/ba/models/bachelor-project/experiments/full-unet/logs/training_run.log"
 
 function source_conda {
     eval "$(conda shell.bash hook)"
