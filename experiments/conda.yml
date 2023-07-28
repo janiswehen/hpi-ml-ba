@@ -14,4 +14,4 @@ dependencies:
       - monai
       - nibabel
       - wandb
-      - pytorch-lightning
+      - tqdm

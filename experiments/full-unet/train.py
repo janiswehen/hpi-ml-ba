@@ -13,6 +13,7 @@ import torch.optim as optim
 import tqdm
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
+from torch.nn.modules.loss import _Loss
 import yaml
 import wandb
 
@@ -22,10 +23,13 @@ from monai.losses import DiceLoss
 
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-def train_fn(loader: DataLoader, model: nn.Module, optimizer: optim.Optimizer, loss_fn, scalar: torch.cuda.amp.GradScaler, loop: tqdm.tqdm, log_wandb: bool):
+def train_fn(loader: DataLoader, model: nn.Module, optimizer: optim.Optimizer, loss_fn: _Loss, scalar: torch.cuda.amp.GradScaler, loop: tqdm.tqdm, log_wandb: bool):
+    start_time = time.time()
+    sum_loss = 0
+    loop_len = len(loader)
     for batch_idx, (data, targets) in enumerate(loop):
-        data = data.half().to(device=DEVICE)
-        targets = targets.half().to(device=DEVICE)
+        data = data.to(device=DEVICE)
+        targets = targets.to(device=DEVICE)
         
         # forward
         with torch.cuda.amp.autocast():
@@ -40,8 +44,14 @@ def train_fn(loader: DataLoader, model: nn.Module, optimizer: optim.Optimizer, l
         
         # update tqdm loop
         loop.set_postfix(loss=loss.item())
+        sum_loss += loss.item()
         if log_wandb:
             wandb.log({"dice-loss": loss.item()})
+    end_time = time.time()
+    epoch_time = end_time - start_time
+    if log_wandb:
+        wandb.log({"epoch_time": epoch_time})
+        wandb.log({"epoch_loss": sum_loss / loop_len})
 
 def try_load_checkpoint(model: nn.Module, checkpoint_path: str):
     try:
@@ -55,11 +65,11 @@ def log_prediction(model: nn.Module, dataset: Dataset, slice=90, n_predictions=5
         wandb_images = []
         for i in range(n_predictions):
             scan, ground_trouth = dataset[i]
-            pred = model(torch.tensor(scan).half().unsqueeze(0).to(DEVICE))[0]
+            pred = model(scan.unsqueeze(0).to(DEVICE))[0]
             
             class_labels = dataset.class_labels
             
-            ground_trouth = torch.tensor(ground_trouth).argmax(dim=0)
+            ground_trouth = ground_trouth.argmax(dim=0)
             pred = pred.argmax(dim=0)
             wandb_images.append(wandb.Image(
                 scan[0, :, :, slice],
@@ -78,6 +88,7 @@ def log_prediction(model: nn.Module, dataset: Dataset, slice=90, n_predictions=5
         wandb.log({"predictions": wandb_images})
 
 def main():
+    torch.set_float32_matmul_precision('medium')
     config = {}
     with open("config.yaml", "r") as stream:
         config = yaml.safe_load(stream)['run']
@@ -117,16 +128,11 @@ def main():
     if config['logging']['enabled']:
         log_prediction(model, dataset, n_predictions=config['logging']['prediction_log_count'])
     for epoch in range(config['training']['n_epochs']):
-        start_time = time.time()
         loop = tqdm.tqdm(loader, desc=f"Epoch {epoch + 1}/{config['training']['n_epochs']}")
         train_fn(loader, model, optimizer, loss_fn, scalar, loop, config['logging']['enabled'])
-        end_time = time.time()
-        elapsed_time = end_time - start_time
         torch.save(model.state_dict(), f'checkpoints/{run_name}/epoch_{epoch}.pth')
         if config['logging']['enabled']:
             log_prediction(model, dataset, n_predictions=config['logging']['prediction_log_count'])
-            wandb.log({"epoch_time_seconds": elapsed_time})
-            wandb.log({"epoch_time": str(timedelta(seconds=elapsed_time))})
 
     torch.save(model.state_dict(), f'final/{run_name}_unet3d_weights.pth')
 

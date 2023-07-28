@@ -3,6 +3,7 @@ import torch.utils.data as data
 import nibabel as nib
 import numpy as np
 import json
+import torch
 
 class BratsDataset(data.Dataset):
     def __init__(self, dataset_dir, transform=None):
@@ -38,8 +39,9 @@ class BratsDataset(data.Dataset):
         img = (img - mean) / std
 
         label = self.one_hot_encode(label)
+        img = img.astype(np.float32)
 
-        return img, label
+        return torch.from_numpy(img), torch.from_numpy(label)
 
     def one_hot_encode(self, label):
         classes = np.array([0, 1, 2, 3])
