@@ -1,7 +1,5 @@
 import os
 import time
-from datetime import timedelta
-import numpy as np
 
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
@@ -18,12 +16,12 @@ import yaml
 import wandb
 
 from unet_3d import UNet3d
-from dataset import BratsDataset
+from dataset import BratsDataset, Split
 from monai.losses import DiceLoss
 
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-def train_fn(loader: DataLoader, model: nn.Module, optimizer: optim.Optimizer, loss_fn: _Loss, scalar: torch.cuda.amp.GradScaler, loop: tqdm.tqdm, log_wandb: bool):
+def train_fn(loader: DataLoader, model: nn.Module, optimizer: optim.Optimizer, loss_fn: _Loss, scalar: torch.cuda.amp.GradScaler, loop: tqdm.tqdm, log_wandb: bool, split: Split):
     start_time = time.time()
     sum_loss = 0
     loop_len = len(loader)
@@ -37,21 +35,22 @@ def train_fn(loader: DataLoader, model: nn.Module, optimizer: optim.Optimizer, l
             loss = loss_fn(predictions, targets)
         
         # backward
-        optimizer.zero_grad()
-        scalar.scale(loss).backward()
-        scalar.step(optimizer)
-        scalar.update()
+        if split == Split.TRAIN:
+            optimizer.zero_grad()
+            scalar.scale(loss).backward()
+            scalar.step(optimizer)
+            scalar.update()
         
         # update tqdm loop
         loop.set_postfix(loss=loss.item())
         sum_loss += loss.item()
         if log_wandb:
-            wandb.log({"dice-loss": loss.item()})
+            wandb.log({f"{split.value}_step_loss": loss.item()})
     end_time = time.time()
     epoch_time = end_time - start_time
     if log_wandb:
-        wandb.log({"epoch_time": epoch_time})
-        wandb.log({"epoch_loss": sum_loss / loop_len})
+        wandb.log({f"{split.value}_epoch_time": epoch_time})
+        wandb.log({f"{split.value}_epoch_loss": sum_loss / loop_len})
 
 def try_load_checkpoint(model: nn.Module, checkpoint_path: str):
     try:
@@ -104,10 +103,28 @@ def main():
     if os.path.isdir(f'checkpoints/{run_name}') == False:
         os.mkdir(f'checkpoints/{run_name}')
 
-    dataset = BratsDataset(config['data_loading']['path'])
+    train_dataset = BratsDataset(
+        config['data_loading']['path'],
+        Split.TRAIN,
+        config['data_loading']['split_ratio'],
+        config['data_loading']['seed']
+    )
+    val_dataset = BratsDataset(
+        config['data_loading']['path'],
+        Split.VAL,
+        config['data_loading']['split_ratio'],
+        config['data_loading']['seed']
+    )
 
-    loader = DataLoader(
-        dataset,
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=config['data_loading']['batch_size'],
+        num_workers=config['data_loading']['n_workers'],
+        shuffle=True,
+    )
+    
+    val_loader = DataLoader(
+        val_dataset,
         batch_size=config['data_loading']['batch_size'],
         num_workers=config['data_loading']['n_workers'],
         shuffle=True,
@@ -124,15 +141,16 @@ def main():
 
     scalar = torch.cuda.amp.GradScaler()
 
-
     if config['logging']['enabled']:
-        log_prediction(model, dataset, n_predictions=config['logging']['prediction_log_count'])
+        log_prediction(model, val_dataset, n_predictions=config['logging']['prediction_log_count'])
     for epoch in range(config['training']['n_epochs']):
-        loop = tqdm.tqdm(loader, desc=f"Epoch {epoch + 1}/{config['training']['n_epochs']}")
-        train_fn(loader, model, optimizer, loss_fn, scalar, loop, config['logging']['enabled'])
+        for split in [Split.TRAIN, Split.VAL]:
+            loader = train_loader if split == Split.TRAIN else val_loader
+            loop = tqdm.tqdm(loader, desc=f"{split.value}-Epoch {epoch + 1}/{config['training']['n_epochs']}")
+            train_fn(loader, model, optimizer, loss_fn, scalar, loop, config['logging']['enabled'], split)
         torch.save(model.state_dict(), f'checkpoints/{run_name}/epoch_{epoch}.pth')
         if config['logging']['enabled']:
-            log_prediction(model, dataset, n_predictions=config['logging']['prediction_log_count'])
+            log_prediction(model, val_dataset, n_predictions=config['logging']['prediction_log_count'])
 
     torch.save(model.state_dict(), f'final/{run_name}_unet3d_weights.pth')
 

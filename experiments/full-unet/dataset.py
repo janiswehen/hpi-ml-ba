@@ -4,12 +4,18 @@ import nibabel as nib
 import numpy as np
 import json
 import torch
+from enum import Enum
+import random
+
+class Split(Enum):
+    TRAIN = 'Train'
+    VAL = 'Val'
 
 class BratsDataset(data.Dataset):
-    def __init__(self, dataset_dir, transform=None):
+    def __init__(self, dataset_dir, split=Split.TRAIN, split_ratio=0.8, seed=42):
         super().__init__()
         self.dataset_dir = dataset_dir
-        self.transform = transform
+        self.split = split
         
         with open(os.path.join(self.dataset_dir, 'dataset.json')) as f:
             self.data_json = json.load(f)
@@ -19,6 +25,9 @@ class BratsDataset(data.Dataset):
             2: self.data_json['labels']['2'],
             3: self.data_json['labels']['3']
         }
+        random.seed(seed)
+        random.shuffle(self.data)
+        self.data = self.data[:int(len(self.data) * split_ratio)] if self.split == Split.TRAIN else self.data[int(len(self.data) * split_ratio):]
     
     def __len__(self):
         return len(self.data)
@@ -51,9 +60,6 @@ class BratsDataset(data.Dataset):
 
 if __name__ == '__main__':
     data_dir = '/dhc/home/janis.wehen/data/Task01_BrainTumour/'
-    dataset = BratsDataset(data_dir)
+    dataset = BratsDataset(data_dir, Split.VAL)
     print(len(dataset))
-    scan, label = dataset[0]
-    print(np.min(scan), np.max(scan))
-    print(np.min(label), np.max(label))
     print(dataset[0][0].shape, dataset[0][1].shape)
