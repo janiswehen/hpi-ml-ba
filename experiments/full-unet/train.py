@@ -44,8 +44,6 @@ def train_fn(loader: DataLoader, model: nn.Module, optimizer: optim.Optimizer, l
         # update tqdm loop
         loop.set_postfix(loss=loss.item())
         sum_loss += loss.item()
-        if log_wandb:
-            wandb.log({f"{split.value}_step_loss": loss.item()})
     end_time = time.time()
     epoch_time = end_time - start_time
     if log_wandb:
