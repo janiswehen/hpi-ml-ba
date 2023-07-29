@@ -156,7 +156,7 @@ def main():
     if config['model_loading']['enabled']:
         try_load_checkpoint(model, config['model_loading']['path'])
 
-    loss_fn = DiceLoss(softmax=True, include_background=False)
+    loss_fn = DiceLoss(softmax=True, include_background=True)
     optimizer = optim.Adam(model.parameters(), lr=config['training']['learning_rate'])
 
     scalar = torch.cuda.amp.GradScaler()
