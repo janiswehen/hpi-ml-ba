@@ -17,6 +17,7 @@ import wandb
 
 from unet_3d import UNet3d
 from dataset import BratsDataset, Split
+from patched_dataset import PatchDataset
 from monai.losses import DiceLoss
 
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -33,19 +34,17 @@ def train_fn(loader: DataLoader, model: nn.Module, optimizer: optim.Optimizer, l
         with torch.cuda.amp.autocast():
             predictions = model(data)
             loss = loss_fn(predictions, targets)
-        
+
         # backward
         if split == Split.TRAIN:
             optimizer.zero_grad()
             scalar.scale(loss).backward()
             scalar.step(optimizer)
             scalar.update()
-        
+
         # update tqdm loop
         loop.set_postfix(loss=loss.item())
         sum_loss += loss.item()
-        if log_wandb:
-            wandb.log({f"{split.value}_step_loss": loss.item()})
     end_time = time.time()
     epoch_time = end_time - start_time
     if log_wandb:
@@ -59,32 +58,32 @@ def try_load_checkpoint(model: nn.Module, checkpoint_path: str):
     except Exception as e:
         print('Unable to load checkpoint. {}'.format(e))
 
-def log_prediction(model: nn.Module, dataset: Dataset, slice=90, n_predictions=5):
-    with torch.cuda.amp.autocast():
-        wandb_images = []
-        for i in range(n_predictions):
-            scan, ground_trouth = dataset[i]
-            pred = model(scan.unsqueeze(0).to(DEVICE))[0]
+# def log_prediction(model: nn.Module, dataset: Dataset, slice=90, n_predictions=5):
+#     with torch.cuda.amp.autocast():
+#         wandb_images = []
+#         for i in range(n_predictions):
+#             scan, ground_trouth = dataset[i]
+#             pred = model(scan.unsqueeze(0).to(DEVICE))[0]
             
-            class_labels = dataset.class_labels
+#             class_labels = dataset.class_labels
             
-            ground_trouth = ground_trouth.argmax(dim=0)
-            pred = pred.argmax(dim=0)
-            wandb_images.append(wandb.Image(
-                scan[0, :, :, slice],
-                caption=f"Scan {i}",
-                masks={
-                    "prediction": {
-                        "mask_data": pred[:, :, slice].cpu().numpy(),
-                        "class_labels": class_labels,
-                    },
-                    "ground-trouth": {
-                        "mask_data": ground_trouth[:, :, slice].cpu().numpy(),
-                        "class_labels": class_labels,
-                    },
-                }
-            ))
-        wandb.log({"predictions": wandb_images})
+#             ground_trouth = ground_trouth.argmax(dim=0)
+#             pred = pred.argmax(dim=0)
+#             wandb_images.append(wandb.Image(
+#                 scan[0, :, :, slice],
+#                 caption=f"Scan {i}",
+#                 masks={
+#                     "prediction": {
+#                         "mask_data": pred[:, :, slice].cpu().numpy(),
+#                         "class_labels": class_labels,
+#                     },
+#                     "ground-trouth": {
+#                         "mask_data": ground_trouth[:, :, slice].cpu().numpy(),
+#                         "class_labels": class_labels,
+#                     },
+#                 }
+#             ))
+#         wandb.log({"predictions": wandb_images})
 
 def main():
     torch.set_float32_matmul_precision('medium')
@@ -115,19 +114,27 @@ def main():
         config['data_loading']['split_ratio'],
         config['data_loading']['seed']
     )
+    train_patch_dataset = PatchDataset(
+        train_dataset,
+        patch_size=config['data_loading']['patch_size'],
+    )
+    val_patch_dataset = PatchDataset(
+        val_dataset,
+        patch_size=config['data_loading']['patch_size'],
+    )
 
     train_loader = DataLoader(
-        train_dataset,
+        train_patch_dataset,
         batch_size=config['data_loading']['batch_size'],
         num_workers=config['data_loading']['n_workers'],
-        shuffle=True,
+        shuffle=False,
     )
     
     val_loader = DataLoader(
-        val_dataset,
+        val_patch_dataset,
         batch_size=config['data_loading']['batch_size'],
         num_workers=config['data_loading']['n_workers'],
-        shuffle=True,
+        shuffle=False,
     )
 
     model = UNet3d(in_channels=4, out_channels=4).to(DEVICE)
@@ -141,16 +148,16 @@ def main():
 
     scalar = torch.cuda.amp.GradScaler()
 
-    if config['logging']['enabled']:
-        log_prediction(model, val_dataset, n_predictions=config['logging']['prediction_log_count'])
+    # if config['logging']['enabled']:
+    #     log_prediction(model, val_dataset, n_predictions=config['logging']['prediction_log_count'])
     for epoch in range(config['training']['n_epochs']):
         for split in [Split.TRAIN, Split.VAL]:
             loader = train_loader if split == Split.TRAIN else val_loader
             loop = tqdm.tqdm(loader, desc=f"{split.value}-Epoch {epoch + 1}/{config['training']['n_epochs']}")
             train_fn(loader, model, optimizer, loss_fn, scalar, loop, config['logging']['enabled'], split)
         torch.save(model.state_dict(), f'checkpoints/{run_name}/epoch_{epoch}.pth')
-        if config['logging']['enabled']:
-            log_prediction(model, val_dataset, n_predictions=config['logging']['prediction_log_count'])
+        # if config['logging']['enabled']:
+        #     log_prediction(model, val_dataset, n_predictions=config['logging']['prediction_log_count'])
 
     torch.save(model.state_dict(), f'final/{run_name}_unet3d_weights.pth')
 

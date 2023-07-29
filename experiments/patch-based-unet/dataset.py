@@ -30,7 +30,7 @@ class BratsDataset(data.Dataset):
         self.data = self.data[:int(len(self.data) * split_ratio)] if self.split == Split.TRAIN else self.data[int(len(self.data) * split_ratio):]
     
     def __len__(self):
-        return 5 # len(self.data)
+        return 10 # len(self.data)
     
     def __getitem__(self, index):
         image_path = os.path.join(self.dataset_dir, self.data[index]['image'])

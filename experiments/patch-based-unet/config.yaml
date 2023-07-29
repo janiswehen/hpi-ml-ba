@@ -4,6 +4,7 @@ run:
     path: "/dhc/home/janis.wehen/data/Task01_BrainTumour/"
     n_workers: 0
     batch_size: 2
+    patch_size: 16
     split_ratio: 0.8
     seed: 42
   model_loading:
