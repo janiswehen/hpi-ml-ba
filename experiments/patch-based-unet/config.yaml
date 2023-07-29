@@ -11,8 +11,11 @@ run:
     enabled: False
     path: "final/training_run_test_unet3d_weights.pth"
   training:
-    n_epochs: 2
+    n_epochs: 5
     learning_rate: 0.0001
   logging:
     enabled: True
     prediction_log_count: 5
+    modality: 1 # 0: FLAIR, 1: T1w, 2: T1gd, 3: T2w
+    slice: 90
+    slice_axis: 0 # 0: sagittal, 1: coronal, 2: axial
