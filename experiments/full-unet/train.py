@@ -57,10 +57,10 @@ def try_load_checkpoint(model: nn.Module, checkpoint_path: str):
     except Exception as e:
         print('Unable to load checkpoint. {}'.format(e))
 
-def log_prediction(model: nn.Module, dataset: Dataset, slice=90, n_predictions=5):
+def log_prediction(model: nn.Module, dataset: Dataset, config: dict):
     with torch.cuda.amp.autocast():
         wandb_images = []
-        for i in range(n_predictions):
+        for i in range(config['n_predictions']):
             scan, ground_trouth = dataset[i]
             pred = model(scan.unsqueeze(0).to(DEVICE))[0]
             
@@ -68,16 +68,17 @@ def log_prediction(model: nn.Module, dataset: Dataset, slice=90, n_predictions=5
             
             ground_trouth = ground_trouth.argmax(dim=0)
             pred = pred.argmax(dim=0)
+            scan = scan[config['modality']]
             wandb_images.append(wandb.Image(
-                scan[0, :, :, slice],
+                torch.select(scan, config['slice_axis'], config['slice']),
                 caption=f"Scan {i}",
                 masks={
                     "prediction": {
-                        "mask_data": pred[:, :, slice].cpu().numpy(),
+                        "mask_data": torch.select(pred, config['slice_axis'], config['slice']).cpu().numpy(),
                         "class_labels": class_labels,
                     },
                     "ground-trouth": {
-                        "mask_data": ground_trouth[:, :, slice].cpu().numpy(),
+                        "mask_data": torch.select(ground_trouth, config['slice_axis'], config['slice']).cpu().numpy(),
                         "class_labels": class_labels,
                     },
                 }
@@ -140,7 +141,7 @@ def main():
     scalar = torch.cuda.amp.GradScaler()
 
     if config['logging']['enabled']:
-        log_prediction(model, val_dataset, n_predictions=config['logging']['prediction_log_count'])
+        log_prediction(model, val_dataset, config['logging'])
     for epoch in range(config['training']['n_epochs']):
         for split in [Split.TRAIN, Split.VAL]:
             loader = train_loader if split == Split.TRAIN else val_loader
@@ -148,7 +149,7 @@ def main():
             train_fn(loader, model, optimizer, loss_fn, scalar, loop, config['logging']['enabled'], split)
         torch.save(model.state_dict(), f'checkpoints/{run_name}/epoch_{epoch}.pth')
         if config['logging']['enabled']:
-            log_prediction(model, val_dataset, n_predictions=config['logging']['prediction_log_count'])
+            log_prediction(model, val_dataset, config['logging'])
 
     torch.save(model.state_dict(), f'final/{run_name}_unet3d_weights.pth')
 
