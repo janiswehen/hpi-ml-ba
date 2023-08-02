@@ -1,15 +1,15 @@
 \documentclass{scrreprt} % <= Druckversion: "scrbook" / Bildschirmversion: "scrreprt"
-\usepackage[ngerman,bibtex]{osm-thesis} % <= Sprache der Arbeit ("ngerman"/"english"), Biblatex-Backend ("bibtex"/"biber")
+\usepackage[english,bibtex]{osm-thesis} % <= Sprache der Arbeit ("ngerman"/"english"), Biblatex-Backend ("bibtex"/"biber")
 
 % ABOUT
-\newcommand{\hpitype}{Bachelorarbeit}
+\newcommand{\hpitype}{Bachelorthesis}
 \newcommand{\hpiauthor}{Janis Wehen}
 \newcommand{\hpititle}{Investigation into the Optimal Architectural Approaches for Medical Image Segmentation}
 \newcommand{\hpititleother}{Untersuchung zu den optimalen Architekturansätzen für die Segmentierung medizinischer Bilder} % <= das Studienreferat verlangt einen deutschen UND englischen Titel
-\newcommand{\hpisupervisor}{Prof.\,Dr.\,Andreas Polze, Max Mustermann}
-\newcommand{\hpichair}{Professur für Betriebssysteme und Middleware}
-\newcommand{\hpiexternalsupervisor}{Wile\,E. Coyote, Road Runner}
-\newcommand{\hpiexternal}{ACME Cooperation}
+\newcommand{\hpisupervisor}{Prof.\,Dr.\,Christoph Lippert, Benjamin Bergner}
+\newcommand{\hpichair}{Chair Digital Health  Machine Learning}
+\newcommand{\hpiexternalsupervisor}{?}
+\newcommand{\hpiexternal}{Focus Group on Artificial Intelligence for Health}
 \newcommand{\hpidate}{\today}
 
 % DOCUMENT
@@ -34,7 +34,6 @@
 	\pagenumbering{arabic}
 	\include{content/chapter1} % example
 	\include{content/chapter2} % example
-	\include{content/chapter3} % example
 
 	% Bibliographie
 	\ifisbook\cleardoubleemptypage\fi
@@ -42,12 +41,12 @@
 	\printbibliography[category=cited]
 	
 	% ggf. Anhang
-	\appendix\include{content/appendix} % example
+	% \appendix\include{content/appendix} % example
 	
 	% ggf. bei englischen Arbeiten den deutschen Abstract nach hinten verschieben
-	% \ifisbook\pagestyle{plain}\cleardoubleemptypage\include{content/abstract_deu}\fi
+	\pagestyle{plain}\include{content/abstract_de}
 
 	% Eigenständigkeitserklärung
-	\ifisbook\pagestyle{plain}\cleardoubleemptypage\include{content/disclaimer}\fi
+	% \ifisbook\pagestyle{plain}\cleardoubleemptypage\include{content/disclaimer}\fi
 
 \end{document}
