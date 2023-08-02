@@ -14,7 +14,7 @@
 *-blx.bib
 *.synctex
 *.dvi
-*.pdf
+thesis.pfd
 *.coverage
 *.DS_Store
 preview-*.png
