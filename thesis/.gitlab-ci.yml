@@ -1,0 +1,79 @@
+# We chose to use a LaTeX image (instead of, e.g., a Debian minimal)
+# because installing all the LaTeX packages takes quite a while.
+# We also do not use a custom image here since experience shows that it
+# ends up unmaintained.
+# As a result, we have to install a few dependencies by hand.
+
+default:
+  image: dockershelf/latex:full
+  before_script:
+    - apt update
+    - apt install make
+
+stages:
+  - test
+  - build
+  - previews
+
+debug_build:
+  stage: test
+  script:
+    - make debug
+
+build:
+  stage: build
+  script:
+    - make pdf
+
+    # Since the functionality to download a ZIP of the repository does
+    # not contain files from git LFS ¹, we clean up after the build and
+    # offer the artifacts ZIP as a download of the repository's files.
+    # ¹ https://gitlab.com/gitlab-org/gitlab-foss/issues/14261
+    - make clean
+
+  artifacts:
+    name: "$CI_PROJECT_NAMESPACE-$CI_PROJECT_NAME-$CI_COMMIT_SHORT_SHA"
+    paths:
+      - "*"
+
+  cache:
+    paths:
+      - thesis.pdf
+
+previews:
+  stage: previews
+  only:
+   - master
+
+  script:
+    - apt install imagemagick
+
+    # allow exporting images from PDFs
+    - sed -i '/disable ghostscript format types/,+6d'
+        /etc/ImageMagick-6/policy.xml
+
+    # we have a separate counter for naming the output images – makes
+    # maintaining links to artifacts easier:
+    - preview_num=1
+
+    - for page_num in 0 2 6 8 15 46;
+      do
+        convert
+          -density 50
+          -quality 90
+          -background white
+          -alpha remove
+          -alpha off
+          thesis.pdf[$page_num]
+          preview-$preview_num.png;
+        preview_num=$(( $preview_num + 1 ));
+      done
+
+  # we use those on https://osm.hpi.de/media/theses
+  artifacts:
+    name: "$CI_PROJECT_NAMESPACE-$CI_PROJECT_NAME-$CI_COMMIT_SHORT_SHA"
+    paths:
+      - "preview-*.png"
+
+  cache:
+    policy: pull
