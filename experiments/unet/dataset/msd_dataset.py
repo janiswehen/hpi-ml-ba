@@ -25,6 +25,12 @@ class MSDTask(Enum):
     TASK08 = ('Task08', 'HepaticVessel')
     TASK09 = ('Task09', 'Spleen')
     TASK10 = ('Task10', 'Colon')
+    
+    def fromStr(string: str):
+        for task in MSDTask:
+            if string in task.value:
+                return task
+        raise ValueError(f'No MSDTask with string {string} found.')
 
 class MSDDataset(data.Dataset):
     def __init__(self, msd_task=MSDTask.TASK01, split=Split.TRAIN, split_ratio=0.8, seed=42):
@@ -48,7 +54,7 @@ class MSDDataset(data.Dataset):
             random.shuffle(self.data)
         self.data = self.data[:int(len(self.data) * split_ratio)] if self.split == Split.TRAIN else self.data[int(len(self.data) * split_ratio):]
         
-        self.shape = self[0][0].shape, self[0][1].shape
+        self.chanels = self[0][0].shape[0], self[0][1].shape[0]
     
     def __len__(self):
         return len(self.data)
@@ -95,22 +101,30 @@ class MSDDataset(data.Dataset):
 
 if __name__ == '__main__':
     for task in MSDTask:
-        if (task != MSDTask.TASK05):
-            continue
         dataset = MSDDataset(msd_task=task, split=Split.TRAIN, split_ratio=1, seed=None)
         print('----------------------------------------------')
-        print(f'{task.value[1]}-Dataset')
+        print(f'{task.value[0]}-{task.value[1]}-Dataset')
         print(f'   length: {len(dataset)}')
         print(f'   modalitys: {dataset.modalitys.values()}')
         print(f'   class labels: {dataset.class_labels.values()}')
         print(f'   is multy modal: {dataset.is_multy_modal}')
-        print(f'   first scan shape: {dataset.shape[0]}')
-        print(f'   first label shape: {dataset.shape[1]}')
-        print('   test for anomalys:')
-        print(f'   ?/{len(dataset)}', end='\r')
-        for i in range(len(dataset)):
-            print(f'   {i}/{len(dataset)}', end='\r')
-            img, label = dataset[i]
-            if img.shape != dataset.shape[0] or label.shape != dataset.shape[1]:
-                print(f'   anomaly at index {i} with shape {img.shape} and {label.shape}')
-                print(f'   {i}/{len(dataset)}', end='\r')
+        print(f'   first scan shape: {dataset[0][0].shape}')
+        print(f'   first label shape: {dataset[0][1].shape}')
+        # print(f'   test for anomalys:')
+        # print(f'   ?/{len(dataset)}', end='\r')
+        # shapes_img = []
+        # shapes_label = []
+        # for i in range(len(dataset)):
+        #     print(f'   {i}/{len(dataset)}', end='\r')
+        #     img, label = dataset[i]
+        #     shapes_img.append(img.shape)
+        #     shapes_label.append(label.shape)
+        # print(f'   {len(dataset)}/{len(dataset)}')
+        # min_shape_img = [min([shape[d] for shape in shapes_img]) for d in range(-1, -4, -1)]
+        # max_shape_img = [max([shape[d] for shape in shapes_img]) for d in range(-1, -4, -1)]
+        # min_shape_label = [min([shape[d] for shape in shapes_label]) for d in range(-1, -4, -1)]
+        # max_shape_label = [max([shape[d] for shape in shapes_label]) for d in range(-1, -4, -1)]
+        # print(f'   min img shape: {min_shape_img}')
+        # print(f'   max img shape: {max_shape_img}')
+        # print(f'   min label shape: {min_shape_label}')
+        # print(f'   max label shape: {max_shape_label}')

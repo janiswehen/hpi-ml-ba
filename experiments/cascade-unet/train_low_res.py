@@ -9,14 +9,15 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import tqdm
-from torch.utils.data import DataLoader
-from torch.utils.data import Dataset
+from torch.utils.data import DataLoader, Dataset
 from torch.nn.modules.loss import _Loss
 import yaml
 import wandb
 
 from unet_3d import UNet3d
-from dataset import MSDDataset, MSDTask, Split
+from dataset import BratsDataset, Split
+from patched_dataset import PatchDataset
+from downsampled_dataset import DownsampledDataset
 from monai.losses import DiceLoss
 
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -33,14 +34,14 @@ def train_fn(loader: DataLoader, model: nn.Module, optimizer: optim.Optimizer, l
         with torch.cuda.amp.autocast():
             predictions = model(data)
             loss = loss_fn(predictions, targets)
-        
+
         # backward
         if split == Split.TRAIN:
             optimizer.zero_grad()
             scalar.scale(loss).backward()
             scalar.step(optimizer)
             scalar.update()
-        
+
         # update tqdm loop
         loop.set_postfix(loss=loss.item())
         sum_loss += loss.item()
@@ -68,8 +69,7 @@ def log_prediction(model: nn.Module, dataset: Dataset, config: dict):
             
             ground_trouth = ground_trouth.argmax(dim=0)
             pred = pred.argmax(dim=0)
-            modality = config['modality'] if config['modality'] < scan.shape[0] else 0
-            scan = scan[modality]
+            scan = scan[config['modality']]
             wandb_images.append(wandb.Image(
                 torch.select(scan, config['slice_axis'], config['slice']),
                 caption=f"Scan {i}",
@@ -93,7 +93,7 @@ def main():
         config = yaml.safe_load(stream)['run']
     run_name = config['name']
     if config['logging']['enabled'] == True:
-        wandb.init(project="Full-3D-UNet", name=run_name, config=config)
+        wandb.init(project="Cascade-3D-UNet", name=run_name, config=config)
 
     # check if weights folders exists
     if os.path.isdir(f'final') == False:
@@ -103,56 +103,64 @@ def main():
     if os.path.isdir(f'checkpoints/{run_name}') == False:
         os.mkdir(f'checkpoints/{run_name}')
 
-    train_dataset = MSDDataset(
-        MSDTask.TASK05,
+    train_dataset = BratsDataset(
+        config['data_loading']['path'],
         Split.TRAIN,
         config['data_loading']['split_ratio'],
         config['data_loading']['seed']
     )
-    val_dataset = MSDDataset(
-        MSDTask.TASK05,
+    val_dataset = BratsDataset(
+        config['data_loading']['path'],
         Split.VAL,
         config['data_loading']['split_ratio'],
         config['data_loading']['seed']
     )
+    train_down_dataset = DownsampledDataset(
+        train_dataset,
+        scale_factor=3
+    )
+    val_down_dataset = DownsampledDataset(
+        val_dataset,
+        scale_factor=3
+    )
 
     train_loader = DataLoader(
-        train_dataset,
+        train_down_dataset,
         batch_size=config['data_loading']['batch_size'],
         num_workers=config['data_loading']['n_workers'],
-        shuffle=True,
+        shuffle=False,
     )
     
     val_loader = DataLoader(
-        val_dataset,
+        val_down_dataset,
         batch_size=config['data_loading']['batch_size'],
         num_workers=config['data_loading']['n_workers'],
-        shuffle=True,
+        shuffle=False,
     )
 
-    model = UNet3d(in_channels=2, out_channels=3).to(DEVICE)
+    model = UNet3d(in_channels=4, out_channels=4).to(DEVICE)
     if config['logging']['enabled']:
         wandb.watch(model, log="all")
     if config['model_loading']['enabled']:
-        try_load_checkpoint(model, config['model_loading']['path'])
+        try_load_checkpoint(model, config['model_loading']['path_low_res'])
 
     loss_fn = DiceLoss(softmax=True, include_background=False)
     optimizer = optim.Adam(model.parameters(), lr=config['training']['learning_rate'])
 
     scalar = torch.cuda.amp.GradScaler()
 
-    # if config['logging']['enabled']:
-    #     log_prediction(model, val_dataset, config['logging'])
+    if config['logging']['enabled']:
+        log_prediction(model, val_down_dataset, config=config['logging'])
     for epoch in range(config['training']['n_epochs']):
         for split in [Split.TRAIN, Split.VAL]:
             loader = train_loader if split == Split.TRAIN else val_loader
             loop = tqdm.tqdm(loader, desc=f"{split.value}-Epoch {epoch + 1}/{config['training']['n_epochs']}")
             train_fn(loader, model, optimizer, loss_fn, scalar, loop, config['logging']['enabled'], split)
-        torch.save(model.state_dict(), f'checkpoints/{run_name}/epoch_{epoch}.pth')
-        # if config['logging']['enabled']:
-        #     log_prediction(model, val_dataset, config['logging'])
+        torch.save(model.state_dict(), f'checkpoints/{run_name}/low_res_epoch_{epoch}.pth')
+        if config['logging']['enabled']:
+            log_prediction(model, val_down_dataset, config=config['logging'])
 
-    torch.save(model.state_dict(), f'final/{run_name}_unet3d_weights.pth')
+    torch.save(model.state_dict(), f'final/{run_name}_low_res_unet3d_weights.pth')
 
 if __name__ == '__main__':
     main()

@@ -1,0 +1,18 @@
+model_type: "full_unet"
+data_loading:
+  n_workers: 0
+  batch_size: 1
+  split_ratio: 0.8
+  seed: 42
+model_loading:
+  enabled: False
+  path: ""
+training:
+  n_epochs: 200
+  learning_rate: 0.0001
+logging:
+  enabled: True
+  prediction_log_count: 5
+  modality: 1
+  rel_slice: 0.4
+  slice_axis: 2

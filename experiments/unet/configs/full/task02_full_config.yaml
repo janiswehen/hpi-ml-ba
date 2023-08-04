@@ -1,0 +1,5 @@
+name: "run_1_heart"
+data_loading:
+  task: "Task02"
+training:
+  n_epochs: 4500

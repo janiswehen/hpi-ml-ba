@@ -1,0 +1,5 @@
+name: "run_1_liver"
+data_loading:
+  task: "Task03"
+training:
+  n_epochs: 750

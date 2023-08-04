@@ -1,0 +1,5 @@
+name: "run_1_hepatic_vessel"
+data_loading:
+  task: "Task08"
+training:
+  n_epochs: 320

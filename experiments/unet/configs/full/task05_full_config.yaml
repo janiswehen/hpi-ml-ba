@@ -1,0 +1,5 @@
+name: "run_1_prostate"
+data_loading:
+  task: "Task05"
+training:
+  n_epochs: 3500

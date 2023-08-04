@@ -64,21 +64,17 @@ class DoubleConv3d(nn.Module):
         super().__init__()
         if not mid_channels:
             mid_channels = out_channels
-        self.conv1 = nn.Conv3d(in_channels, mid_channels, kernel_size=3, padding=1)
-        self.batchnorm1 = nn.BatchNorm3d(mid_channels)
-        self.relu1 = nn.ReLU(inplace=True)
-        self.conv2 = nn.Conv3d(mid_channels, out_channels, kernel_size=3, padding=1)
-        self.batchnorm2 = nn.BatchNorm3d(out_channels)
-        self.relu2 = nn.ReLU(inplace=True)
+        self.double_conv = nn.Sequential(
+            nn.Conv3d(in_channels, mid_channels, kernel_size=3, padding=1),
+            nn.BatchNorm3d(mid_channels),
+            nn.ReLU(inplace=True),
+            nn.Conv3d(mid_channels, out_channels, kernel_size=3, padding=1),
+            nn.BatchNorm3d(out_channels),
+            nn.ReLU(inplace=True)
+        )
 
     def forward(self, x):
-        c1 = self.conv1(x)
-        b1 = self.batchnorm1(c1)
-        r1 = self.relu1(b1)
-        c2 = self.conv2(r1)
-        b2 = self.batchnorm2(c2)
-        r2 = self.relu2(b2)
-        return r2
+        return self.double_conv(x)
 
 
 class Down(nn.Module):

@@ -1,0 +1,5 @@
+name: "run_1_spleen"
+data_loading:
+  task: "Task09"
+training:
+  n_epochs: 2500

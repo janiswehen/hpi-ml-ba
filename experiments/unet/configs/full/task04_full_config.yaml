@@ -1,0 +1,5 @@
+name: "run_1_hippocampus"
+data_loading:
+  task: "Task04"
+training:
+  n_epochs: 370

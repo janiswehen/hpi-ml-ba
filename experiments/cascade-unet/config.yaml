@@ -1,20 +1,22 @@
 run:
-  name: "full_training_run_1"
+  name: "train_run_cascade_1"
   data_loading:
     path: "/dhc/home/janis.wehen/data/Task01_BrainTumour/"
-    n_workers: 0
-    batch_size: 1
+    n_workers: 4
+    batch_size: 2
+    patch_size: 16
     split_ratio: 0.8
     seed: 42
   model_loading:
     enabled: False
-    path: "final/training_run_test_unet3d_weights.pth"
+    path_low_res: "final/training_run_test_unet3d_weights.pth"
+    path_full_res_patch: "final/training_run_test_unet3d_weights.pth"
   training:
-    n_epochs: 2
+    n_epochs: 200
     learning_rate: 0.0001
   logging:
     enabled: True
-    prediction_log_count: 5
+    prediction_log_count: 10
     modality: 1 # 0: FLAIR, 1: T1w, 2: T1gd, 3: T2w
-    slice: 90
+    slice: 35
     slice_axis: 0 # 0: sagittal, 1: coronal, 2: axial

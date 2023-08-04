@@ -1,0 +1,5 @@
+name: "run_1_brain_tumor"
+data_loading:
+  task: "Task01"
+training:
+  n_epochs: 200

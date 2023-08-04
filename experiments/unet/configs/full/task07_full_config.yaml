@@ -1,0 +1,5 @@
+name: "run_1_pancreas"
+data_loading:
+  task: "Task07"
+training:
+  n_epochs: 350

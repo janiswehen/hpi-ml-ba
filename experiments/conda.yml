@@ -15,3 +15,4 @@ dependencies:
       - nibabel
       - wandb
       - tqdm
+      - jsonmerge

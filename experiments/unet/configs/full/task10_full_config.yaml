@@ -1,0 +1,5 @@
+name: "run_1_colon"
+data_loading:
+  task: "Task10"
+training:
+  n_epochs: 770

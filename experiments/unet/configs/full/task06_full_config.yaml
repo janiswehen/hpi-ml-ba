@@ -1,0 +1,5 @@
+name: "run_1_lung"
+data_loading:
+  task: "Task06"
+training:
+  n_epochs: 1500
