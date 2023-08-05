@@ -1,7 +1,7 @@
-model_type: "patch_unet"
+model_type: "cascade_1_unet"
 data_loading:
   n_workers: 0
-  patch_size: 16
+  scale_factor: 3
   batch_size: 1
   split_ratio: 0.8
   seed: 42

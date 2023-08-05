@@ -11,6 +11,7 @@ class DownsampledDataset(data.Dataset):
         self.rescale = rescale
         self.modalitys = dataset.modalitys
         self.class_labels = dataset.class_labels
+        self.chanels = dataset.chanels
         self.org_shape = dataset[0][0].shape[-3:]
         self.scaled_shape = (self.org_shape[0] // scale_factor, self.org_shape[1] // scale_factor, self.org_shape[2] // scale_factor)
         self.up = torch.nn.Upsample(size=self.org_shape, mode='trilinear', align_corners=True)

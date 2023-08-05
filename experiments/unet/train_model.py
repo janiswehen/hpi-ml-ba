@@ -26,5 +26,13 @@ if __name__ == '__main__':
         from unet.trainer.patch_unet_trainer import PatchUnetTrainer
         trainer = PatchUnetTrainer(config)
         trainer.fit()
+    elif config['model_type'] == 'cascade_1_unet':
+        from unet.trainer.cascade_stage1_unet_trainer import CascadeStage1UnetTrainer
+        trainer = CascadeStage1UnetTrainer(config)
+        trainer.fit()
+    elif config['model_type'] == 'cascade_2_unet':
+        from unet.trainer.cascade_stage2_unet_trainer import CascadeStage2UnetTrainer
+        trainer = CascadeStage2UnetTrainer(config)
+        trainer.fit()
     else:
         raise Exception(f'No trainer found for model type {config["model_type"]}') 
