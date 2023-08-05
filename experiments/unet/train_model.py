@@ -22,5 +22,9 @@ if __name__ == '__main__':
         from unet.trainer.full_unet_trainer import FullUnetTrainer
         trainer = FullUnetTrainer(config)
         trainer.fit()
+    elif config['model_type'] == 'patch_unet':
+        from unet.trainer.patch_unet_trainer import PatchUnetTrainer
+        trainer = PatchUnetTrainer(config)
+        trainer.fit()
     else:
         raise Exception(f'No trainer found for model type {config["model_type"]}') 

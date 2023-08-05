@@ -57,7 +57,7 @@ class MSDDataset(data.Dataset):
         self.chanels = self[0][0].shape[0], self[0][1].shape[0]
     
     def __len__(self):
-        return len(self.data)
+        return 10 #len(self.data)
     
     def __getitem__(self, index):
         image_path = os.path.join(self.dataset_dir, self.data[index]['image'])

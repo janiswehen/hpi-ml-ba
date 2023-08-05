@@ -5,7 +5,7 @@ import torch
 from unet.dataset.msd_dataset import MSDDataset
 
 class PatchDataset(data.Dataset):
-    def __init__(self, dataset: data.Dataset, patch_size=16):
+    def __init__(self, dataset: MSDDataset, patch_size=16):
         super().__init__()
         self.dataset = dataset
         self.patch_size = patch_size
@@ -13,7 +13,10 @@ class PatchDataset(data.Dataset):
         self.patch_count = self.shape[-1] // patch_size if self.shape[-1] % patch_size == 0 else self.shape[-1] // patch_size + 1
         self.last_data_idx = None
         self.last_data = None
+        
         self.class_labels = dataset.class_labels
+        self.modalitys = dataset.modalitys
+        self.chanels = dataset.chanels
 
     def __len__(self):
         return len(self.dataset) * self.patch_count

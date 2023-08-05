@@ -1,6 +1,7 @@
-model_type: "full_unet"
+model_type: "patch_unet"
 data_loading:
   n_workers: 0
+  patch_size: 16
   batch_size: 1
   split_ratio: 0.8
   seed: 42
@@ -8,7 +9,7 @@ model_loading:
   enabled: False
   path: ""
 training:
-  n_corrections: 90000 # epoch * (n_samples / batch_size)
+  n_corrections: 90000 # n_epoch * (n_samples / batch_size)
   learning_rate: 0.0001
 logging:
   enabled: True
