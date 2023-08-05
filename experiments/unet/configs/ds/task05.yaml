@@ -1,3 +1,7 @@
 name: "run_1_prostate"
 data_loading:
   task: "Task05"
+logging:
+  modality: 0
+  rel_slice: 0.6
+  slice_axis: 0

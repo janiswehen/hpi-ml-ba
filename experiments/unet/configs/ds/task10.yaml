@@ -1,3 +1,7 @@
 name: "run_1_colon"
 data_loading:
   task: "Task10"
+logging:
+  modality: 0
+  rel_slice: 0.6
+  slice_axis: 0

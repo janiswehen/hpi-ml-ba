@@ -1,6 +1,6 @@
 model_type: "patch_unet"
 data_loading:
-  n_workers: 0
+  n_workers: 4
   patch_size: 16
   batch_size: 1
   split_ratio: 0.8
@@ -10,10 +10,7 @@ model_loading:
   path: ""
 training:
   n_corrections: 90000 # n_epoch * (n_samples / batch_size)
-  learning_rate: 0.0001
+  learning_rate: 0.0003
 logging:
   enabled: True
-  prediction_log_count: 5
-  modality: 1
-  rel_slice: 0.6
-  slice_axis: 2
+  prediction_log_count: 10

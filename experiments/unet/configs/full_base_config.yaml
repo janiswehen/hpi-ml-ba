@@ -1,6 +1,6 @@
 model_type: "full_unet"
 data_loading:
-  n_workers: 0
+  n_workers: 4
   batch_size: 1
   split_ratio: 0.8
   seed: 42
@@ -9,10 +9,7 @@ model_loading:
   path: ""
 training:
   n_corrections: 90000 # epoch * (n_samples / batch_size)
-  learning_rate: 0.0001
+  learning_rate: 0.0003
 logging:
   enabled: True
-  prediction_log_count: 5
-  modality: 1
-  rel_slice: 0.4
-  slice_axis: 2
+  prediction_log_count: 10

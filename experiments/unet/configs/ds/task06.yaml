@@ -1,3 +1,7 @@
 name: "run_1_lung"
 data_loading:
   task: "Task06"
+logging:
+  modality: 0
+  rel_slice: 0.6
+  slice_axis: 0
