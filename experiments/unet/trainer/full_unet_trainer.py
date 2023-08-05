@@ -9,6 +9,7 @@ from monai.losses import DiceLoss
 from math import floor
 
 from unet.dataset.msd_dataset import Split, MSDTask, MSDDataset
+from unet.dataset.normalized_dataset import NormalizedDataset
 from unet.model.unet_3d import UNet3d
 
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -27,17 +28,21 @@ class FullUnetTrainer():
             wandb.init(project="Full-3D-UNet", name=self.run_name, config=config)
         
         self.task = MSDTask.fromStr(self.data_loading_config['task'])
-        self.train_dataset = MSDDataset(
-            msd_task=self.task,
-            split=Split.TRAIN,
-            split_ratio=self.data_loading_config['split_ratio'],
-            seed=self.data_loading_config['seed']
+        self.train_dataset = NormalizedDataset(
+            dataset=MSDDataset(
+                msd_task=self.task,
+                split=Split.TRAIN,
+                split_ratio=self.data_loading_config['split_ratio'],
+                seed=self.data_loading_config['seed']
+            )
         )
-        self.val_dataset = MSDDataset(
-            msd_task=self.task,
-            split=Split.VAL,
-            split_ratio=self.data_loading_config['split_ratio'],
-            seed=self.data_loading_config['seed']
+        self.val_dataset = NormalizedDataset(
+            dataset=MSDDataset(
+                msd_task=self.task,
+                split=Split.VAL,
+                split_ratio=self.data_loading_config['split_ratio'],
+                seed=self.data_loading_config['seed']
+            )
         )
         self.train_loader = DataLoader(
             dataset=self.train_dataset,
@@ -146,5 +151,6 @@ class FullUnetTrainer():
                     desc=f"{split.value}-Epoch {epoch + 1}/{self.epochs}"
                 )
                 self.train_fn(loop, split)
-            self.save_model(f'checkpoints/{self.run_name}/epoch_{epoch}.pth')
-        self.save_model(f'final/{self.run_name}_unet_weights.pth')
+            self.save_model(f'checkpoints/{self.run_name}/full-unet/epoch_{epoch}.pth')
+            self.log_prediction()
+        self.save_model(f'final/full-unet/{self.run_name}_unet_weights.pth')

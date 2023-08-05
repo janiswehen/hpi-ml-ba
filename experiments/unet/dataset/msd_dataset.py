@@ -70,10 +70,6 @@ class MSDDataset(data.Dataset):
         label.astype(np.float32)
         label = np.expand_dims(label, axis=0)
 
-        mean = np.mean(img)
-        std = np.std(img)
-        img = (img - mean) / std
-
         label = self.one_hot_encode(label)
         img = img.astype(np.float32)
 

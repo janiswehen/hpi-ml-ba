@@ -10,6 +10,7 @@ from math import floor
 
 from unet.dataset.msd_dataset import Split, MSDTask, MSDDataset
 from unet.dataset.downsampled_dataset import DownsampledDataset
+from unet.dataset.normalized_dataset import NormalizedDataset
 from unet.model.unet_3d import UNet3d
 
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -40,13 +41,17 @@ class CascadeStage1UnetTrainer():
             split_ratio=self.data_loading_config['split_ratio'],
             seed=self.data_loading_config['seed']
         )
-        self.train_dataset = DownsampledDataset(
-            dataset=org_train_dataset,
-            scale_factor=self.data_loading_config['scale_factor'],
+        self.train_dataset = NormalizedDataset(
+            dataset=DownsampledDataset(
+                dataset=org_train_dataset,
+                scale_factor=self.data_loading_config['scale_factor'],
+            )
         )
-        self.val_dataset = DownsampledDataset(
-            dataset=org_val_dataset,
-            scale_factor=self.data_loading_config['scale_factor'],
+        self.val_dataset = NormalizedDataset(
+            dataset=DownsampledDataset(
+                dataset=org_val_dataset,
+                scale_factor=self.data_loading_config['scale_factor'],
+            )
         )
         self.train_loader = DataLoader(
             dataset=self.train_dataset,
@@ -155,5 +160,6 @@ class CascadeStage1UnetTrainer():
                     desc=f"{split.value}-Epoch {epoch + 1}/{self.epochs}"
                 )
                 self.train_fn(loop, split)
-            self.save_model(f'checkpoints/{self.run_name}/epoch_{epoch}.pth')
-        self.save_model(f'final/{self.run_name}_unet_weights.pth')
+            self.save_model(f'checkpoints/{self.run_name}/cascade1-unet/epoch_{epoch}.pth')
+            self.log_prediction()
+        self.save_model(f'final/cascade1-unet/{self.run_name}_unet_weights.pth')

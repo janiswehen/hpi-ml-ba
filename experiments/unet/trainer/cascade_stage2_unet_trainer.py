@@ -11,6 +11,7 @@ from math import floor
 from unet.dataset.msd_dataset import Split, MSDTask, MSDDataset
 from unet.dataset.patch_dataset import PatchDataset
 from unet.dataset.downsampled_dataset import DownsampledDataset
+from unet.dataset.normalized_dataset import NormalizedDataset
 from unet.dataset.combined_dataset import CombinedDataset
 from unet.model.unet_3d import UNet3d
 
@@ -30,17 +31,21 @@ class CascadeStage2UnetTrainer():
             wandb.init(project="Cascade-3D-UNet-stage-2", name=self.run_name, config=config)
         
         self.task = MSDTask.fromStr(self.data_loading_config['task'])
-        org_train_dataset = MSDDataset(
-            msd_task=self.task,
-            split=Split.TRAIN,
-            split_ratio=self.data_loading_config['split_ratio'],
-            seed=self.data_loading_config['seed']
+        org_train_dataset = NormalizedDataset(
+            dataset=MSDDataset(
+                msd_task=self.task,
+                split=Split.TRAIN,
+                split_ratio=self.data_loading_config['split_ratio'],
+                seed=self.data_loading_config['seed']
+            )
         )
-        org_val_dataset = MSDDataset(
-            msd_task=self.task,
-            split=Split.VAL,
-            split_ratio=self.data_loading_config['split_ratio'],
-            seed=self.data_loading_config['seed']
+        org_val_dataset = NormalizedDataset(
+            dataset=MSDDataset(
+                msd_task=self.task,
+                split=Split.VAL,
+                split_ratio=self.data_loading_config['split_ratio'],
+                seed=self.data_loading_config['seed']
+            )
         )
         resampled_train_dataset = DownsampledDataset(
             dataset=org_train_dataset,
@@ -189,5 +194,6 @@ class CascadeStage2UnetTrainer():
                     desc=f"{split.value}-Epoch {epoch + 1}/{self.epochs}"
                 )
                 self.train_fn(loop, split)
-            self.save_model(f'checkpoints/{self.run_name}/epoch_{epoch}.pth')
-        self.save_model(f'final/{self.run_name}_unet_weights.pth')
+            self.save_model(f'checkpoints/{self.run_name}/cascade2-unet/epoch_{epoch}.pth')
+            self.log_prediction()
+        self.save_model(f'final/cascade2-unet/{self.run_name}_unet_weights.pth')

@@ -10,6 +10,7 @@ from math import floor
 
 from unet.dataset.msd_dataset import Split, MSDTask, MSDDataset
 from unet.dataset.patch_dataset import PatchDataset
+from unet.dataset.normalized_dataset import NormalizedDataset
 from unet.model.unet_3d import UNet3d
 
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -40,13 +41,17 @@ class PatchUnetTrainer():
             split_ratio=self.data_loading_config['split_ratio'],
             seed=self.data_loading_config['seed']
         )
-        self.train_dataset = PatchDataset(
-            dataset=org_train_dataset,
-            patch_size=self.data_loading_config['patch_size'],
+        self.train_dataset = NormalizedDataset(
+            dataset=PatchDataset(
+                dataset=org_train_dataset,
+                patch_size=self.data_loading_config['patch_size'],
+            )
         )
-        self.val_dataset = PatchDataset(
-            dataset=org_val_dataset,
-            patch_size=self.data_loading_config['patch_size'],
+        self.val_dataset = NormalizedDataset(
+            dataset=PatchDataset(
+                dataset=org_val_dataset,
+                patch_size=self.data_loading_config['patch_size'],
+            )
         )
         self.train_loader = DataLoader(
             dataset=self.train_dataset,
@@ -169,5 +174,6 @@ class PatchUnetTrainer():
                     desc=f"{split.value}-Epoch {epoch + 1}/{self.epochs}"
                 )
                 self.train_fn(loop, split)
-            self.save_model(f'checkpoints/{self.run_name}/epoch_{epoch}.pth')
+            self.save_model(f'checkpoints/{self.run_name}/patch-unet/epoch_{epoch}.pth')
+            self.log_prediction()
         self.save_model(f'final/{self.run_name}_unet_weights.pth')
