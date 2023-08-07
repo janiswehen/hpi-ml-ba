@@ -12,8 +12,9 @@ concat_rule = {
 }
 
 class CombinedDataset(data.Dataset):
-    def __init__(self, dataset1: data.Dataset, dataset2: data.Dataset, rule=concat_rule):
+    def __init__(self, dataset1: data.Dataset, dataset2: data.Dataset, rule=concat_rule, normalize=False):
         super().__init__()
+        self.normalize = normalize
         self.chanels = rule["chanels"](dataset1.chanels, dataset2.chanels)
         self.class_labels = rule["labels"](dataset1.class_labels, dataset2.class_labels)
         self.modalitys = rule["modalitys"](dataset1.modalitys, dataset2.modalitys)
@@ -27,7 +28,14 @@ class CombinedDataset(data.Dataset):
         return len(self.dataset1)
     
     def __getitem__(self, index):
-        return self.rule(self.dataset1[index], self.dataset2[index])
+        img, label = self.rule(self.dataset1[index], self.dataset2[index])
+        
+        if self.normalize:
+            img_mean = img.mean(dim=(1,2,3), keepdim=True)
+            img_std = img.std(dim=(1,2,3), keepdim=True)
+            img = (img - img_mean) / img_std
+        
+        return img, label
 
 if __name__ == '__main__':
     dataset1 = MSDDataset()

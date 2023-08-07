@@ -10,7 +10,6 @@ from math import floor
 
 from unet.dataset.msd_dataset import Split, MSDTask, MSDDataset
 from unet.dataset.patch_dataset import PatchDataset
-from unet.dataset.normalized_dataset import NormalizedDataset
 from unet.model.unet_3d import UNet3d
 
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -19,6 +18,7 @@ class PatchUnetTrainer():
     def __init__(self, config):
         assert config['model_type'] == 'patch_unet'
         torch.set_float32_matmul_precision('medium')
+        torch.autograd.set_detect_anomaly(True)
         self.run_name = config['name']
         self.data_loading_config = config['data_loading']
         self.model_loading_config = config['model_loading']
@@ -33,25 +33,23 @@ class PatchUnetTrainer():
             msd_task=self.task,
             split=Split.TRAIN,
             split_ratio=self.data_loading_config['split_ratio'],
-            seed=self.data_loading_config['seed']
+            seed=self.data_loading_config['seed'],
+            normalize=True
         )
         org_val_dataset = MSDDataset(
             msd_task=self.task,
             split=Split.VAL,
             split_ratio=self.data_loading_config['split_ratio'],
-            seed=self.data_loading_config['seed']
+            seed=self.data_loading_config['seed'],
+            normalize=True
         )
-        self.train_dataset = NormalizedDataset(
-            dataset=PatchDataset(
-                dataset=org_train_dataset,
-                patch_size=self.data_loading_config['patch_size'],
-            )
+        self.train_dataset = PatchDataset(
+            dataset=org_train_dataset,
+            patch_size=self.data_loading_config['patch_size'],
         )
-        self.val_dataset = NormalizedDataset(
-            dataset=PatchDataset(
-                dataset=org_val_dataset,
-                patch_size=self.data_loading_config['patch_size'],
-            )
+        self.val_dataset = PatchDataset(
+            dataset=org_val_dataset,
+            patch_size=self.data_loading_config['patch_size'],
         )
         self.train_loader = DataLoader(
             dataset=self.train_dataset,

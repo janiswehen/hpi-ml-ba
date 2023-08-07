@@ -4,6 +4,7 @@ import nibabel as nib
 import numpy as np
 import json
 import torch
+import csv
 import torch.nn.functional as F
 from enum import Enum
 import random
@@ -33,8 +34,9 @@ class MSDTask(Enum):
         raise ValueError(f'No MSDTask with string {string} found.')
 
 class MSDDataset(data.Dataset):
-    def __init__(self, msd_task=MSDTask.TASK01, split=Split.TRAIN, split_ratio=0.8, seed=42):
+    def __init__(self, msd_task=MSDTask.TASK01, split=Split.TRAIN, split_ratio=0.8, seed=42, normalize=False):
         super().__init__()
+        self.normalize = normalize
         self.dataset_dir = os.path.join(BASE_DATA_DIR, f'{msd_task.value[0]}_{msd_task.value[1]}')
         self.split = split
         
@@ -73,7 +75,14 @@ class MSDDataset(data.Dataset):
         label = self.one_hot_encode(label)
         img = img.astype(np.float32)
 
-        return self.pad_tensor(torch.from_numpy(img)), self.pad_tensor(torch.from_numpy(label))
+        img, label = self.pad_tensor(torch.from_numpy(img)), self.pad_tensor(torch.from_numpy(label))
+        
+        if self.normalize:
+            img_mean = img.mean(dim=(1,2,3), keepdim=True)
+            img_std = img.std(dim=(1,2,3), keepdim=True)
+            img = (img - img_mean) / img_std
+        
+        return img, label
 
     def one_hot_encode(self, label):
         classes = np.array([0] + [i for i in self.class_labels.keys()])
@@ -94,8 +103,17 @@ class MSDDataset(data.Dataset):
         tensor = F.pad(tensor, padding, "constant", 0)
         return tensor
 
+def save_shapes_to_csv(dataset: MSDDataset, csv_file_path: str):
+    with open(csv_file_path, 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["Scan Index", "Width", "Height", "Depth"])
+        
+        for idx, (scan, _) in enumerate(dataset):
+            writer.writerow([idx, scan.shape[-3], scan.shape[-2], scan.shape[-1]])
+            print(f'{idx}/{len(dataset)}', end='\r')
 
-if __name__ == '__main__':
+
+def print_info():
     for task in MSDTask:
         dataset = MSDDataset(msd_task=task, split=Split.TRAIN, split_ratio=1, seed=None)
         print('----------------------------------------------')
@@ -124,3 +142,12 @@ if __name__ == '__main__':
         # print(f'   max img shape: {max_shape_img}')
         # print(f'   min label shape: {min_shape_label}')
         # print(f'   max label shape: {max_shape_label}')
+
+def write_shape_csvs():
+    for task in MSDTask:
+        print(f'{task.value[0]}-{task.value[1]}-Dataset')
+        dataset = MSDDataset(msd_task=task, split=Split.TRAIN, split_ratio=1, seed=None)
+        save_shapes_to_csv(dataset, f'./shapes/{task.value[0]}_{task.value[1]}_shapes.csv')
+
+if __name__ == '__main__':
+    write_shape_csvs()

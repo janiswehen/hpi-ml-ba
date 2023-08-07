@@ -5,8 +5,9 @@ import torch
 from unet.dataset.msd_dataset import Split, MSDDataset, MSDTask
 
 class DownsampledDataset(data.Dataset):
-    def __init__(self, dataset: data.Dataset, scale_factor=3, rescale=False):
+    def __init__(self, dataset: data.Dataset, scale_factor=3, rescale=False, normalize=False):
         super().__init__()
+        self.normalize = normalize
         self.dataset = dataset
         self.rescale = rescale
         self.modalitys = dataset.modalitys
@@ -23,7 +24,14 @@ class DownsampledDataset(data.Dataset):
     def __getitem__(self, index):
         if self.rescale:
             return self.up(self.down(self.dataset[index][0].unsqueeze(0)))[0], self.up(self.down(self.dataset[index][1].unsqueeze(0)))[0]
-        return self.down(self.dataset[index][0].unsqueeze(0))[0], self.down(self.dataset[index][1].unsqueeze(0))[0]
+        img, label = self.down(self.dataset[index][0].unsqueeze(0))[0], self.down(self.dataset[index][1].unsqueeze(0))[0]
+        
+        if self.normalize:
+            img_mean = img.mean(dim=(1,2,3), keepdim=True)
+            img_std = img.std(dim=(1,2,3), keepdim=True)
+            img = (img - img_mean) / img_std
+        
+        return img, label
 
 if __name__ == '__main__':
     dataset = MSDDataset()

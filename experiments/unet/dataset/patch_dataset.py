@@ -5,8 +5,9 @@ import torch
 from unet.dataset.msd_dataset import MSDDataset
 
 class PatchDataset(data.Dataset):
-    def __init__(self, dataset: MSDDataset, patch_size=16):
+    def __init__(self, dataset: MSDDataset, patch_size=16, normalize=False):
         super().__init__()
+        self.normalize = normalize
         self.dataset = dataset
         self.patch_size = patch_size
         self.shape = dataset[0][0].shape
@@ -37,7 +38,14 @@ class PatchDataset(data.Dataset):
             padding_size = end - self.shape[-1]
             scan = F.pad(scan, (0, padding_size))
             seg = F.pad(seg, (0, padding_size))
-        return scan[..., start:end], seg[..., start:end]
+        img, label = scan[..., start:end], seg[..., start:end]
+        
+        if self.normalize:
+            img_mean = img.mean(dim=(1,2,3), keepdim=True)
+            img_std = img.std(dim=(1,2,3), keepdim=True)
+            img = (img - img_mean) / img_std
+        
+        return img, label
     
     def get_original(self, tensor):
         N, C, W, H, P = tensor.shape
