@@ -63,8 +63,7 @@ class PatchDataset(data.Dataset):
         return tensor
 
 if __name__ == '__main__':
-    data_dir = '/dhc/home/janis.wehen/data/Task01_BrainTumour/'
-    dataset = MSDDataset(data_dir)
+    dataset = MSDDataset()
     patch_dataset = PatchDataset(dataset)
     patches = [], []
     for i in range(patch_dataset.patch_count+5):

@@ -28,16 +28,21 @@ class CascadeStage1UnetTrainer():
             wandb.init(project="Cascade-3D-UNet-stage-1", name=self.run_name, config=config)
         
         self.task = MSDTask.fromStr(self.data_loading_config['task'])
+        split_ratio = (
+            self.data_loading_config['split_ratio']['train'],
+            self.data_loading_config['split_ratio']['val'],
+            self.data_loading_config['split_ratio']['test']
+        )
         org_train_dataset = MSDDataset(
             msd_task=self.task,
             split=Split.TRAIN,
-            split_ratio=self.data_loading_config['split_ratio'],
+            split_ratio=split_ratio,
             seed=self.data_loading_config['seed']
         )
         org_val_dataset = MSDDataset(
             msd_task=self.task,
             split=Split.VAL,
-            split_ratio=self.data_loading_config['split_ratio'],
+            split_ratio=split_ratio,
             seed=self.data_loading_config['seed']
         )
         self.train_dataset = DownsampledDataset(

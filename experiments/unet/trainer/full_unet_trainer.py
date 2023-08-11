@@ -27,17 +27,22 @@ class FullUnetTrainer():
             wandb.init(project="Full-3D-UNet", name=self.run_name, config=config)
         
         self.task = MSDTask.fromStr(self.data_loading_config['task'])
+        split_ratio = (
+            self.data_loading_config['split_ratio']['train'],
+            self.data_loading_config['split_ratio']['val'],
+            self.data_loading_config['split_ratio']['test']
+        )
         self.train_dataset = MSDDataset(
             msd_task=self.task,
             split=Split.TRAIN,
-            split_ratio=self.data_loading_config['split_ratio'],
+            split_ratio=split_ratio,
             seed=self.data_loading_config['seed'],
             normalize=True
         )
         self.val_dataset = MSDDataset(
             msd_task=self.task,
             split=Split.VAL,
-            split_ratio=self.data_loading_config['split_ratio'],
+            split_ratio=split_ratio,
             seed=self.data_loading_config['seed'],
             normalize=True
         )

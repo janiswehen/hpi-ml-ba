@@ -14,6 +14,7 @@ BASE_DATA_DIR = '/dhc/home/janis.wehen/data/MSD/'
 class Split(Enum):
     TRAIN = 'Train'
     VAL = 'Val'
+    Test = 'Test'
 
 class MSDTask(Enum):
     TASK01 = ('Task01', 'BrainTumour')
@@ -34,8 +35,9 @@ class MSDTask(Enum):
         raise ValueError(f'No MSDTask with string {string} found.')
 
 class MSDDataset(data.Dataset):
-    def __init__(self, msd_task=MSDTask.TASK01, split=Split.TRAIN, split_ratio=0.8, seed=42, normalize=False):
+    def __init__(self, msd_task=MSDTask.TASK01, split=Split.TRAIN, split_ratio=(0.6, 0.2, 0.2), seed=42, normalize=False):
         super().__init__()
+        assert split_ratio[0] + split_ratio[1] + split_ratio[2] == 1
         self.normalize = normalize
         self.dataset_dir = os.path.join(BASE_DATA_DIR, f'{msd_task.value[0]}_{msd_task.value[1]}')
         self.split = split
@@ -54,7 +56,12 @@ class MSDDataset(data.Dataset):
         if seed is not None:
             random.seed(seed)
             random.shuffle(self.data)
-        self.data = self.data[:int(len(self.data) * split_ratio)] if self.split == Split.TRAIN else self.data[int(len(self.data) * split_ratio):]
+        if self.split == Split.TRAIN:
+            self.data = self.data[:int(len(self.data) * split_ratio[0])]
+        elif self.split == Split.VAL:
+            self.data = self.data[int(len(self.data) * split_ratio[0]):int(len(self.data) * (split_ratio[0] + split_ratio[1]))]
+        else:
+            self.data = self.data[int(len(self.data) * (split_ratio[0] + split_ratio[1])):]
         
         self.chanels = self[0][0].shape[0], self[0][1].shape[0]
     
@@ -115,7 +122,7 @@ def save_shapes_to_csv(dataset: MSDDataset, csv_file_path: str):
 
 def print_info():
     for task in MSDTask:
-        dataset = MSDDataset(msd_task=task, split=Split.TRAIN, split_ratio=1, seed=None)
+        dataset = MSDDataset(msd_task=task, split=Split.TRAIN, split_ratio=(1,0,0), seed=None)
         print('----------------------------------------------')
         print(f'{task.value[0]}-{task.value[1]}-Dataset')
         print(f'   length: {len(dataset)}')
@@ -146,7 +153,7 @@ def print_info():
 def write_shape_csvs():
     for task in MSDTask:
         print(f'{task.value[0]}-{task.value[1]}-Dataset')
-        dataset = MSDDataset(msd_task=task, split=Split.TRAIN, split_ratio=1, seed=None)
+        dataset = MSDDataset(msd_task=task, split=Split.TRAIN, split_ratio=(1,0,0), seed=None)
         save_shapes_to_csv(dataset, f'./shapes/{task.value[0]}_{task.value[1]}_shapes.csv')
 
 if __name__ == '__main__':
