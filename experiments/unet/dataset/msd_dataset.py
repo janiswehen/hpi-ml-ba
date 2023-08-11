@@ -150,4 +150,4 @@ def write_shape_csvs():
         save_shapes_to_csv(dataset, f'./shapes/{task.value[0]}_{task.value[1]}_shapes.csv')
 
 if __name__ == '__main__':
-    write_shape_csvs()
+    print_info()

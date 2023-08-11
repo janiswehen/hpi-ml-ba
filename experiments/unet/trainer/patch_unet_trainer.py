@@ -174,4 +174,4 @@ class PatchUnetTrainer():
                 self.train_fn(loop, split)
             self.save_model(f'checkpoints/{self.run_name}/patch-unet/epoch_{epoch}.pth')
             self.log_prediction()
-        self.save_model(f'final/{self.run_name}_unet_weights.pth')
+        self.save_model(f'final/patch_unet/{self.run_name}_unet_weights.pth')
