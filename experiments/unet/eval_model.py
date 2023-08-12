@@ -22,5 +22,13 @@ if __name__ == '__main__':
         from unet.evaluator.full_unet_evaluator import FullUnetEvaluator
         trainer = FullUnetEvaluator(config)
         trainer.evaluate()
+    elif config['model_type'] == 'patch_unet':
+        from unet.evaluator.patch_unet_evaluator import PatchUnetEvaluator
+        trainer = PatchUnetEvaluator(config)
+        trainer.evaluate()
+    elif config['model_type'] ==  'patch_cascade_unet':
+        from unet.evaluator.patch_cascade_unet_evaluator import PatchCascadeUnetEvaluator
+        trainer = PatchCascadeUnetEvaluator(config)
+        trainer.evaluate()
     else:
         raise Exception(f'No trainer found for model type {config["model_type"]}') 

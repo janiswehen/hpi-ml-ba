@@ -46,6 +46,13 @@ class FullUnetTrainer():
             seed=self.data_loading_config['seed'],
             normalize=True
         )
+        self.test_dataset = MSDDataset(
+            msd_task=self.task,
+            split=Split.Test,
+            split_ratio=split_ratio,
+            seed=self.data_loading_config['seed'],
+            normalize=True
+        )
         self.train_loader = DataLoader(
             dataset=self.train_dataset,
             batch_size=self.data_loading_config['batch_size'],
@@ -85,10 +92,10 @@ class FullUnetTrainer():
         with torch.cuda.amp.autocast():
             wandb_images = []
             for i in range(self.logging_config['prediction_log_count']):
-                scan, ground_trouth = self.val_dataset[i]
+                scan, ground_trouth = self.test_dataset[i]
                 pred = self.model(scan.unsqueeze(0).to(DEVICE))[0]
 
-                class_labels = self.val_dataset.class_labels
+                class_labels = self.test_dataset.class_labels
 
                 ground_trouth = ground_trouth.argmax(dim=0)
                 pred = pred.argmax(dim=0)

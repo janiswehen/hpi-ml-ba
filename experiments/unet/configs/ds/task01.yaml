@@ -1,7 +1,7 @@
-name: "run_1_brain_tumor"
+name: "run_1_brain_tumor-test"
 data_loading:
   task: "Task01"
 logging:
   modality: 0
   rel_slice: 0.6
-  slice_axis: 0
+  slice_axis: 2

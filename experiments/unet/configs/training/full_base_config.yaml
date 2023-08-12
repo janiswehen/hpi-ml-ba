@@ -9,7 +9,7 @@ data_loading:
   seed: 42
 model_loading:
   enabled: False
-  path: ""
+  path: "final/full-unet/run_1_brain_tumor_unet_weights.pth"
 training:
   n_corrections: 90000 # epoch * (n_samples / batch_size)
   learning_rate: 0.0001

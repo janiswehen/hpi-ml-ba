@@ -23,7 +23,7 @@ function source_conda {
 
 function train {
     cd $script_path
-    python -m unet.train_model --config configs/full_base_config.yaml configs/ds/task01.yaml > $log_path 2>&1
+    python -m unet.train_model --config configs/training/full_base_config.yaml configs/ds/task01.yaml > $log_path 2>&1
 }
 
 source_conda
