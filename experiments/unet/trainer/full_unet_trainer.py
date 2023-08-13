@@ -69,7 +69,7 @@ class FullUnetTrainer():
         self.loss_fn = DiceLoss(softmax=True, include_background=False)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.training_config['learning_rate'])
         self.scalar = torch.cuda.amp.GradScaler()
-        self.epochs = self.training_config['n_corrections'] // (len(self.train_dataset) // self.data_loading_config['batch_size'])
+        self.epochs = self.training_config['n_steps'] // len(self.train_dataset)
 
     def initModel(self):
         model = UNet3d(
@@ -93,7 +93,7 @@ class FullUnetTrainer():
             wandb_images = []
             for i in range(self.logging_config['prediction_log_count']):
                 scan, ground_trouth = self.test_dataset[i]
-                pred = self.model(scan.unsqueeze(0).to(DEVICE))[0]
+                pred = self.model(scan.unsqueeze(0).to(DEVICE))[0].cpu()
 
                 class_labels = self.test_dataset.class_labels
 

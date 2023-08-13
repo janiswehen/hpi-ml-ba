@@ -1,0 +1,14 @@
+name: "brain_tumor"
+data_loading:
+  task: "Task01"
+  slice_axis: 1 # (*, , )
+logging:
+  modality: 0
+  rel_slice: 0.6
+  slice_axis: 2 # (, , *)
+
+# Width: Max: 240, Min: 240, Mean: 240.0, Median: 240.0
+# Height: Max: 240, Min: 240, Mean: 240.0, Median: 240.0
+# Depth: Max: 155, Min: 155, Mean: 155.0, Median: 155.0
+# Voxel Count: Max: 8,928,000, Min: 8,928,000, Mean: 8,928,000.0, Median: 8,928,000.0
+# Dataset Size: 484

@@ -9,7 +9,7 @@ from monai.losses import DiceLoss
 from math import floor
 
 from unet.dataset.msd_dataset import Split, MSDTask, MSDDataset
-from unet.dataset.patch_dataset import PatchDataset
+from unet.dataset.sliced_dataset import SlicedDataset
 from unet.model.unet_3d import UNet3d
 
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -48,23 +48,37 @@ class PatchUnetTrainer():
             seed=self.data_loading_config['seed'],
             normalize=True
         )
-        self.train_dataset = PatchDataset(
+        org_test_dataset = MSDDataset(
+            msd_task=self.task,
+            split=Split.Test,
+            split_ratio=split_ratio,
+            seed=self.data_loading_config['seed'],
+            normalize=True
+        )
+        self.train_dataset = SlicedDataset(
             dataset=org_train_dataset,
             patch_size=self.data_loading_config['patch_size'],
+            slice_axis=self.data_loading_config['slice_axis'],
         )
-        self.val_dataset = PatchDataset(
+        self.val_dataset = SlicedDataset(
             dataset=org_val_dataset,
             patch_size=self.data_loading_config['patch_size'],
+            slice_axis=self.data_loading_config['slice_axis'],
+        )
+        self.test_dataset = SlicedDataset(
+            dataset=org_test_dataset,
+            patch_size=self.data_loading_config['patch_size'],
+            slice_axis=self.data_loading_config['slice_axis'],
         )
         self.train_loader = DataLoader(
             dataset=self.train_dataset,
-            batch_size=self.data_loading_config['batch_size'],
+            batch_size=1,
             num_workers=self.data_loading_config['n_workers'],
             shuffle=False,
         )
         self.val_loader = DataLoader(
             dataset=self.val_dataset,
-            batch_size=self.data_loading_config['batch_size'],
+            batch_size=1,
             num_workers=self.data_loading_config['n_workers'],
             shuffle=False,
         )
@@ -72,7 +86,7 @@ class PatchUnetTrainer():
         self.loss_fn = DiceLoss(softmax=True, include_background=True)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.training_config['learning_rate'])
         self.scalar = torch.cuda.amp.GradScaler()
-        self.epochs = self.training_config['n_corrections'] // (len(self.train_dataset) // self.data_loading_config['batch_size'])
+        self.epochs = self.training_config['n_steps'] // len(self.train_dataset)
 
     def initModel(self):
         model = UNet3d(
@@ -95,39 +109,31 @@ class PatchUnetTrainer():
         with torch.cuda.amp.autocast():
             wandb_images = []
             for i in range(self.logging_config['prediction_log_count']):
-                scan_p = []
-                ground_trouth_p = []
-                pred_p = []
-                for patch_idx in range(self.val_dataset.patch_count):
-                    idx = i * self.val_dataset.patch_count + patch_idx
-                    scan, ground_trouth = self.val_dataset[idx]
-                    pred = self.model(scan.unsqueeze(0).to(DEVICE))[0]
-                    
-                    class_labels = self.val_dataset.class_labels
-                    
-                    scan = scan.cpu()
-                    ground_trouth = ground_trouth.argmax(dim=0).unsqueeze(0).cpu()
-                    pred = pred.argmax(dim=0).unsqueeze(0).cpu()
-                    scan_p.append(scan)
-                    ground_trouth_p.append(ground_trouth)
-                    pred_p.append(pred)
+                scan, ground_trouth = self.test_dataset[i]
+                pred_ps = []
+                for i in range(scan.shape[0]):
+                    scan_p = scan[i,...].unsqueeze(0).to(DEVICE)
+                    pred_p = self.model(scan_p)
+                    pred_ps.append(pred_p[0].cpu())
+                pred = torch.stack(pred_ps)
+                pred = self.test_dataset.get_original(pred)
+                pred = pred.argmax(dim=0)
+                ground_trouth = self.test_dataset.get_original(ground_trouth)
+                ground_trouth = ground_trouth.argmax(dim=0)
+                scan = self.test_dataset.get_original(scan)[self.logging_config['modality']]
                 
-                modality = self.logging_config['modality'] if self.logging_config['modality'] < self.train_dataset.chanels[0] else 0
-                scan_p = self.val_dataset.get_original(torch.stack(scan_p))[modality]
-                ground_trouth_p = self.val_dataset.get_original(torch.stack(ground_trouth_p))[0]
-                pred_p = self.val_dataset.get_original(torch.stack(pred_p))[0]
-                
-                slice_idx = floor(scan.shape[-3:][self.logging_config['slice_axis']] * self.logging_config['rel_slice'])
+                class_labels = self.test_dataset.class_labels
+                slice_idx = floor(scan.shape[self.logging_config['slice_axis']] * self.logging_config['rel_slice'])
                 wandb_images.append(wandb.Image(
-                    torch.select(scan_p, self.logging_config['slice_axis'] , slice_idx),
+                    torch.select(scan, self.logging_config['slice_axis'] , slice_idx),
                     caption=f"Scan {i}",
                     masks={
                         "prediction": {
-                            "mask_data": torch.select(pred_p, self.logging_config['slice_axis'] , slice_idx).numpy(),
+                            "mask_data": torch.select(pred, self.logging_config['slice_axis'] , slice_idx).numpy(),
                             "class_labels": class_labels,
                         },
                         "ground-trouth": {
-                            "mask_data": torch.select(ground_trouth_p, self.logging_config['slice_axis'] , slice_idx).numpy(),
+                            "mask_data": torch.select(ground_trouth, self.logging_config['slice_axis'] , slice_idx).numpy(),
                             "class_labels": class_labels,
                         },
                     }
@@ -140,23 +146,26 @@ class PatchUnetTrainer():
         sum_loss = 0
         loop_len = len(loader)
         for batch_idx, (data, targets) in enumerate(loop):
-            data = data.to(device=DEVICE)
-            targets = targets.to(device=DEVICE)
-            
-            # forward
-            with torch.cuda.amp.autocast():
-                predictions = self.model(data)
-                loss = self.loss_fn(predictions, targets)
-            
-            # backward
-            if split == Split.TRAIN:
-                self.optimizer.zero_grad()
-                self.scalar.scale(loss).backward()
-                self.scalar.step(self.optimizer)
-                self.scalar.update()
+            losses = []
+            for i in range(data.shape[1]):
+                data_patch = data[:,i,...].to(device=DEVICE)
+                targets_patch = targets[:,i,...].to(device=DEVICE)
+                
+                # forward
+                with torch.cuda.amp.autocast():
+                    predictions_patch = self.model(data_patch)
+                    loss = self.loss_fn(predictions_patch, targets_patch)
+                losses.append(loss.item())
+                sum_loss += loss.item()
+                # backward
+                if split == Split.TRAIN:
+                    self.optimizer.zero_grad()
+                    self.scalar.scale(loss).backward()
+                    self.scalar.step(self.optimizer)
+                    self.scalar.update()
             
             # update tqdm loop
-            loop.set_postfix(loss=loss.item())
+            loop.set_postfix(loss=sum(losses) / len(losses))
             sum_loss += loss.item()
         end_time = time.time()
         epoch_time = end_time - start_time

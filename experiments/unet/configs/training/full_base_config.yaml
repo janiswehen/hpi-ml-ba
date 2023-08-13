@@ -1,6 +1,6 @@
 model_type: "full_unet"
 data_loading:
-  n_workers: 4
+  n_workers: 0
   batch_size: 1
   split_ratio:
     train: 0.6
@@ -11,7 +11,7 @@ model_loading:
   enabled: False
   path: "final/full-unet/run_1_brain_tumor_unet_weights.pth"
 training:
-  n_corrections: 90000 # epoch * (n_samples / batch_size)
+  n_steps: 90000 # epoch * n_samples
   learning_rate: 0.0001
 logging:
   enabled: True

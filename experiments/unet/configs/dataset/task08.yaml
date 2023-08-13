@@ -1,0 +1,14 @@
+name: "hepatic_vessel"
+data_loading:
+  task: "Task08"
+  slice_axis: 0 # (*, , )
+logging:
+  modality: 0
+  rel_slice: 0.6
+  slice_axis: 2 # (, , *)
+
+# Width: Max: 512, Min: 512, Mean: 512.0, Median: 512.0
+# Height: Max: 512, Min: 512, Mean: 512.0, Median: 512.0
+# Depth: Max: 181, Min: 24, Mean: 69.70, Median: 49.0
+# Voxel Count: Max: 47,448,064, Min: 6,291,456, Mean: 18,272,215.45, Median: 12,845,056.0
+# Dataset Size: 303

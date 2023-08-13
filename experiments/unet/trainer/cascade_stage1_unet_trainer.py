@@ -71,7 +71,7 @@ class CascadeStage1UnetTrainer():
         self.loss_fn = DiceLoss(softmax=True, include_background=False)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.training_config['learning_rate'])
         self.scalar = torch.cuda.amp.GradScaler()
-        self.epochs = self.training_config['n_corrections'] // (len(self.train_dataset) // self.data_loading_config['batch_size'])
+        self.epochs = self.training_config['n_steps'] // len(self.train_dataset)
 
     def initModel(self):
         model = UNet3d(

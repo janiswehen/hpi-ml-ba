@@ -1,0 +1,14 @@
+name: "liver"
+data_loading:
+  task: "Task03"
+  slice_axis: 1 # (*, , )
+logging:
+  modality: 0
+  rel_slice: 0.6
+  slice_axis: 2 # (, , *)
+
+# Width: Max: 512, Min: 512, Mean: 512.0, Median: 512.0
+# Height: Max: 512, Min: 512, Mean: 512.0, Median: 512.0
+# Depth: Max: 987, Min: 74, Mean: 447.62, Median: 432.0
+# Voxel Count: Max: 258,736,128, Min: 19,398,656, Mean: 117,340,457.04, Median: 113,246,208.0
+# Dataset Size: 131

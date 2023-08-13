@@ -1,0 +1,14 @@
+name: "pancreas"
+data_loading:
+  task: "Task07"
+  slice_axis: 0 # (*, , )
+logging:
+  modality: 0
+  rel_slice: 0.6
+  slice_axis: 2 # (, , *)
+
+# Width: Max: 512, Min: 512, Mean: 512.0, Median: 512.0
+# Height: Max: 512, Min: 512, Mean: 512.0, Median: 512.0
+# Depth: Max: 751, Min: 37, Mean: 95.09, Median: 93.0
+# Voxel Count: Max: 196,870,144, Min: 9,699,328, Mean: 24,926,069.52, Median: 24,379,392.0
+# Dataset Size: 281
