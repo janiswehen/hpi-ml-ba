@@ -2,6 +2,10 @@ name: "hepatic_vessel"
 data_loading:
   task: "Task08"
   slice_axis: 0 # (*, , )
+  scaling:
+    w: 0.15
+    h: 0.15
+    d: 0.7
 logging:
   modality: 0
   rel_slice: 0.6

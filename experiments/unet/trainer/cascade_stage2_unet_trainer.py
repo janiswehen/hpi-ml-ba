@@ -56,19 +56,24 @@ class CascadeStage2UnetTrainer():
             seed=self.data_loading_config['seed'],
             normalize=True
         )
+        scaling = (
+            self.data_loading_config['scaling']['w'],
+            self.data_loading_config['scaling']['h'],
+            self.data_loading_config['scaling']['d']
+        )
         resampled_train_dataset = DownsampledDataset(
             dataset=org_train_dataset,
-            scale_factor=self.data_loading_config['scale_factor'],
+            scaling=scaling,
             rescale=True,
         )
         resampled_val_dataset = DownsampledDataset(
             dataset=org_val_dataset,
-            scale_factor=self.data_loading_config['scale_factor'],
+            scaling=scaling,
             rescale=True,
         )
         resampled_test_dataset = DownsampledDataset(
             dataset=org_test_dataset,
-            scale_factor=self.data_loading_config['scale_factor'],
+            scaling=scaling,
             rescale=True,
         )
         combined_train_dataset = CombinedDataset(
@@ -142,7 +147,9 @@ class CascadeStage2UnetTrainer():
                 for i in range(scan.shape[0]):
                     scan_p = scan[i,...].unsqueeze(0).to(DEVICE)
                     pred_p = self.model(scan_p)
-                    pred_ps.append(pred_p[0].cpu())
+                    scan_p = scan_p.detach().cpu()
+                    pred_p = pred_p.detach().cpu()
+                    pred_ps.append(pred_p[0])
                 pred = torch.stack(pred_ps)
                 pred = self.test_dataset.get_original(pred)
                 pred = pred.argmax(dim=0)
@@ -183,6 +190,9 @@ class CascadeStage2UnetTrainer():
                 with torch.cuda.amp.autocast():
                     predictions_patch = self.model(data_patch)
                     loss = self.loss_fn(predictions_patch, targets_patch)
+                    data_patch = data_patch.detach().cpu()
+                    predictions_patch = predictions_patch.detach().cpu()
+                    targets_patch = targets_patch.detach().cpu()
                 losses.append(loss.item())
                 sum_loss += loss.item()
                 

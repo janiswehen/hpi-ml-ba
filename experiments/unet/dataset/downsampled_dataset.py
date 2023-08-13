@@ -2,10 +2,11 @@ import torch.utils.data as data
 import torch.nn.functional as F
 import torch
 
+from math import floor
 from unet.dataset.msd_dataset import Split, MSDDataset, MSDTask
 
 class DownsampledDataset(data.Dataset):
-    def __init__(self, dataset: data.Dataset, scale_factor=3, rescale=False, normalize=False):
+    def __init__(self, dataset: data.Dataset, scaling=(0.4, 0.4, 0.4), rescale=False, normalize=False):
         super().__init__()
         self.normalize = normalize
         self.dataset = dataset
@@ -14,7 +15,11 @@ class DownsampledDataset(data.Dataset):
         self.class_labels = dataset.class_labels
         self.chanels = dataset.chanels
         self.org_shape = dataset[0][0].shape[-3:]
-        self.scaled_shape = (self.org_shape[0] // scale_factor, self.org_shape[1] // scale_factor, self.org_shape[2] // scale_factor)
+        self.scaled_shape = (
+            floor(self.org_shape[0] * scaling[0]),
+            floor(self.org_shape[1] * scaling[1]),
+            floor(self.org_shape[2] * scaling[2])
+        )
         self.up = torch.nn.Upsample(size=self.org_shape, mode='trilinear', align_corners=True)
         self.down = torch.nn.Upsample(size=self.scaled_shape, mode='trilinear', align_corners=True)
 

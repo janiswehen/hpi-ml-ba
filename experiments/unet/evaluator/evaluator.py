@@ -40,11 +40,11 @@ class Evaluator():
 
         self.loader = DataLoader(
             dataset=self.dataset,
-            batch_size=self.data_loading_config['batch_size'],
+            batch_size=1,
             num_workers=self.data_loading_config['n_workers'],
             shuffle=False,
         )
-        self.epochs = self.eval_config['n_steps'] // (len(self.dataset) // self.data_loading_config['batch_size'])
+        self.epochs = self.eval_config['n_steps'] // len(self.dataset)
 
         self.initModel()
         self.loss_fn = DiceLoss(softmax=True, include_background=False)

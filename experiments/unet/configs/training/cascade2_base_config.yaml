@@ -1,8 +1,7 @@
 model_type: "cascade_2_unet"
 data_loading:
   n_workers: 0
-  scale_factor: 3
-  patch_size: 16
+  patch_size: 17
   split_ratio:
     train: 0.6
     val: 0.2

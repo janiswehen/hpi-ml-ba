@@ -55,13 +55,13 @@ class FullUnetTrainer():
         )
         self.train_loader = DataLoader(
             dataset=self.train_dataset,
-            batch_size=self.data_loading_config['batch_size'],
+            batch_size=1,
             num_workers=self.data_loading_config['n_workers'],
             shuffle=False,
         )
         self.val_loader = DataLoader(
             dataset=self.val_dataset,
-            batch_size=self.data_loading_config['batch_size'],
+            batch_size=1,
             num_workers=self.data_loading_config['n_workers'],
             shuffle=False,
         )

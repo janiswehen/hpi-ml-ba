@@ -10,7 +10,7 @@ data_loading:
 model_loading:
   path: "final/full-unet/run_1_brain_tumor_unet_weights.pth"
 eval:
-  n_steps: 100 # epoch * (n_samples / batch_size)
+  n_steps: 2000 # epoch * (n_samples / batch_size)
 logging:
   enabled: True
   prediction_log_count: 10

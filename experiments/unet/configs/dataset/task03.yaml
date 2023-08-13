@@ -2,6 +2,10 @@ name: "liver"
 data_loading:
   task: "Task03"
   slice_axis: 1 # (*, , )
+  scaling:
+    w: 0.2
+    h: 0.2
+    d: 0.22
 logging:
   modality: 0
   rel_slice: 0.6

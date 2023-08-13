@@ -45,25 +45,30 @@ class CascadeStage1UnetTrainer():
             split_ratio=split_ratio,
             seed=self.data_loading_config['seed']
         )
+        scaling = (
+            self.data_loading_config['scaling']['w'],
+            self.data_loading_config['scaling']['h'],
+            self.data_loading_config['scaling']['d']
+        )
         self.train_dataset = DownsampledDataset(
             dataset=org_train_dataset,
-            scale_factor=self.data_loading_config['scale_factor'],
+            scaling=scaling,
             normalize=True
         )
         self.val_dataset = DownsampledDataset(
             dataset=org_val_dataset,
-            scale_factor=self.data_loading_config['scale_factor'],
+            scaling=scaling,
             normalize=True
         )
         self.train_loader = DataLoader(
             dataset=self.train_dataset,
-            batch_size=self.data_loading_config['batch_size'],
+            batch_size=1,
             num_workers=self.data_loading_config['n_workers'],
             shuffle=False,
         )
         self.val_loader = DataLoader(
             dataset=self.val_dataset,
-            batch_size=self.data_loading_config['batch_size'],
+            batch_size=1,
             num_workers=self.data_loading_config['n_workers'],
             shuffle=False,
         )

@@ -2,6 +2,10 @@ name: "brain_tumor"
 data_loading:
   task: "Task01"
   slice_axis: 1 # (*, , )
+  scaling:
+    w: 0.3
+    h: 0.3
+    d: 0.3
 logging:
   modality: 0
   rel_slice: 0.6

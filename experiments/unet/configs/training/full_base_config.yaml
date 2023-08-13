@@ -1,7 +1,6 @@
 model_type: "full_unet"
 data_loading:
   n_workers: 0
-  batch_size: 1
   split_ratio:
     train: 0.6
     val: 0.2
