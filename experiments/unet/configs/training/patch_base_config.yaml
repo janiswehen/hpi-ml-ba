@@ -1,6 +1,6 @@
 model_type: "patch_unet"
 data_loading:
-  n_workers: 0
+  n_workers: 9
   patch_size: 16
   split_ratio:
     train: 0.6

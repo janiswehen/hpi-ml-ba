@@ -86,7 +86,7 @@ class PatchUnetTrainer():
         self.loss_fn = DiceLoss(softmax=True, include_background=True)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.training_config['learning_rate'])
         self.scalar = torch.cuda.amp.GradScaler()
-        self.epochs = self.training_config['n_steps'] // len(self.train_dataset)
+        self.epochs = self.training_config['n_steps'] // (len(self.train_dataset) * self.data_loading_config['mean_slice_count'])
 
     def initModel(self):
         model = UNet3d(
@@ -161,7 +161,7 @@ class PatchUnetTrainer():
                     predictions_patch = predictions_patch.detach().cpu()
                     targets_patch = targets_patch.detach().cpu()
                 losses.append(loss.item())
-                sum_loss += loss.item()
+                
                 # backward
                 if split == Split.TRAIN:
                     self.optimizer.zero_grad()
@@ -170,8 +170,9 @@ class PatchUnetTrainer():
                     self.scalar.update()
             
             # update tqdm loop
-            loop.set_postfix(loss=sum(losses) / len(losses))
-            sum_loss += loss.item()
+            loss = sum(losses) / len(losses)
+            loop.set_postfix(loss=loss)
+            sum_loss += loss
         end_time = time.time()
         epoch_time = end_time - start_time
         if self.logging_config['enabled']:

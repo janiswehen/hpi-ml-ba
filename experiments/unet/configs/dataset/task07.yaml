@@ -1,7 +1,8 @@
 name: "pancreas"
 data_loading:
   task: "Task07"
-  slice_axis: 0 # (*, , )
+  slice_axis: 2 # (*, , )
+  mean_slice_count: 6
   scaling:
     w: 0.15
     h: 0.15

@@ -1,14 +1,15 @@
-name: "liver"
+name: "liver-2"
 data_loading:
   task: "Task03"
-  slice_axis: 1 # (*, , )
+  slice_axis: 2 # (*, , )
+  mean_slice_count: 28
   scaling:
     w: 0.2
     h: 0.2
     d: 0.22
 logging:
   modality: 0
-  rel_slice: 0.6
+  rel_slice: 0.5
   slice_axis: 2 # (, , *)
 
 # Width: Max: 512, Min: 512, Mean: 512.0, Median: 512.0

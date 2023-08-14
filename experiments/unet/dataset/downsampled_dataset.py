@@ -15,27 +15,23 @@ class DownsampledDataset(data.Dataset):
         self.class_labels = dataset.class_labels
         self.chanels = dataset.chanels
         self.org_shape = dataset[0][0].shape[-3:]
-        self.scaled_shape = (
-            floor(self.org_shape[0] * scaling[0]),
-            floor(self.org_shape[1] * scaling[1]),
-            floor(self.org_shape[2] * scaling[2])
-        )
         self.up = torch.nn.Upsample(size=self.org_shape, mode='trilinear', align_corners=True)
-        self.down = torch.nn.Upsample(size=self.scaled_shape, mode='trilinear', align_corners=True)
+        self.down = torch.nn.Upsample(scale_factor=scaling, mode='trilinear', align_corners=True)
 
     def __len__(self):
         return len(self.dataset)
     
     def __getitem__(self, index):
+        scan , seg= self.dataset[index]
         if self.rescale:
-            return self.up(self.down(self.dataset[index][0].unsqueeze(0)))[0], self.up(self.down(self.dataset[index][1].unsqueeze(0)))[0]
-        img, label = self.down(self.dataset[index][0].unsqueeze(0))[0], self.down(self.dataset[index][1].unsqueeze(0))[0]
+            self.up.size = scan.shape[-3:]
+            return self.up(self.down(scan.unsqueeze(0)))[0], self.up(self.down(seg.unsqueeze(0)))[0]
+        img, label = self.down(scan.unsqueeze(0))[0], self.down(seg.unsqueeze(0))[0]
         
         if self.normalize:
             img_mean = img.mean(dim=(1,2,3), keepdim=True)
             img_std = img.std(dim=(1,2,3), keepdim=True)
             img = (img - img_mean) / img_std
-        
         return img, label
 
 if __name__ == '__main__':

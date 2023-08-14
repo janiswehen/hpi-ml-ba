@@ -1,6 +1,6 @@
 model_type: "cascade_1_unet"
 data_loading:
-  n_workers: 0
+  n_workers: 9
   split_ratio:
     train: 0.6
     val: 0.2
@@ -10,7 +10,7 @@ model_loading:
   enabled: False
   path: ""
 training:
-  n_steps: 90000 # n_epoch * n_samples
+  n_steps: 70000 # n_epoch * n_samples
   learning_rate: 0.0001
 logging:
   enabled: True

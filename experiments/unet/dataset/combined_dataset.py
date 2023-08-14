@@ -28,6 +28,8 @@ class CombinedDataset(data.Dataset):
         return len(self.dataset1)
     
     def __getitem__(self, index):
+        data1 = self.dataset1[index]
+        data2 = self.dataset2[index]
         img, label = self.rule(self.dataset1[index], self.dataset2[index])
         
         if self.normalize:
