@@ -10,7 +10,7 @@ from math import floor
 
 from unet.dataset.msd_dataset import Split, MSDTask, MSDDataset
 from unet.dataset.downsampled_dataset import DownsampledDataset
-from unet.model.unet_3d import UNet3d
+from unet.model.unet import UNet3d
 
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 

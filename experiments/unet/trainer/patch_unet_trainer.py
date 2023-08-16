@@ -10,7 +10,7 @@ from math import floor
 
 from unet.dataset.msd_dataset import Split, MSDTask, MSDDataset
 from unet.dataset.sliced_dataset import SlicedDataset
-from unet.model.unet_3d import UNet3d
+from unet.model.unet import UNet3d
 
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -83,7 +83,7 @@ class PatchUnetTrainer():
             shuffle=False,
         )
         self.model = self.initModel()
-        self.loss_fn = DiceLoss(softmax=True, include_background=True)
+        self.loss_fn = DiceLoss(softmax=True, include_background=False)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.training_config['learning_rate'])
         self.scalar = torch.cuda.amp.GradScaler()
         self.epochs = self.training_config['n_steps'] // (len(self.train_dataset) * self.data_loading_config['mean_slice_count'])
@@ -160,6 +160,8 @@ class PatchUnetTrainer():
                     data_patch = data_patch.detach().cpu()
                     predictions_patch = predictions_patch.detach().cpu()
                     targets_patch = targets_patch.detach().cpu()
+                if loss.item() > 0.999:
+                    continue
                 losses.append(loss.item())
                 
                 # backward

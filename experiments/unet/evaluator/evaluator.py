@@ -52,7 +52,7 @@ class Evaluator():
     def initModel(self):
         raise NotImplementedError
 
-    def infer(self, scan: torch.Tensor) -> torch.Tensor:
+    def infer(self) -> torch.Tensor:
         raise NotImplementedError
 
     def log_predictions(self):

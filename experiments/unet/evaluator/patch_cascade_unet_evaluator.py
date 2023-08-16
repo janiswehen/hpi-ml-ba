@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 from monai.networks.utils import one_hot
 
-from unet.model.unet_3d import UNet3d
+from unet.model.unet import UNet3d
 from unet.evaluator.evaluator import Evaluator
 
 class PatchCascadeUnetEvaluator(Evaluator):
@@ -22,11 +22,11 @@ class PatchCascadeUnetEvaluator(Evaluator):
         self.stage2.load_state_dict(torch.load(self.model_loading_config['path2']))
         self.org_shape = self.dataset[0][0].shape[-3:]
         self.scaled_shape = (
-            self.org_shape[0] // self.data_loading_config['scale_factor'],
-            self.org_shape[1] // self.data_loading_config['scale_factor'],
-            self.org_shape[2] // self.data_loading_config['scale_factor']
+            self.data_loading_config['scaling']['w'],
+            self.data_loading_config['scaling']['h'],
+            self.data_loading_config['scaling']['d']
         )
-        self.down_scale = torch.nn.Upsample(size=self.scaled_shape, mode='trilinear', align_corners=True)
+        self.down_scale = torch.nn.Upsample(scale_factor=self.scaled_shape, mode='trilinear', align_corners=True)
         self.up_scale = torch.nn.Upsample(size=self.org_shape, mode='trilinear', align_corners=True)
 
     def stage1_infer(self, scan):
@@ -42,36 +42,39 @@ class PatchCascadeUnetEvaluator(Evaluator):
         return one_hot(a, x.shape[1])
 
     def stage2_infer(self, scan_guided):
-        if self.eval_config['slice_axis'] == 0:
-            scan_guided = scan_guided.permute(0,1,4,3,2)
-        elif self.eval_config['slice_axis'] == 1:
-            scan_guided = scan_guided.permute(0,1,2,4,3)
-
-        D = scan_guided.shape[-1]
+        D = scan_guided.shape[self.data_loading_config['slice_axis'] - 3]
         patch_count = D // self.data_loading_config['patch_size'] + 1
         padding = patch_count * self.data_loading_config['patch_size'] - D
         if padding > 0:
-            scan_guided = F.pad(scan_guided, (0, padding))
+            if self.data_loading_config['slice_axis'] == 0:
+                scan_guided = F.pad(scan_guided, (0, 0, 0, 0, 0, padding))
+            elif self.data_loading_config['slice_axis'] == 1:
+                scan_guided = F.pad(scan_guided, (0, 0, 0, padding))
+            else:
+                scan_guided = F.pad(scan_guided, (0, padding))
         preds = []
         for idx in range(patch_count):
             start = idx*self.data_loading_config['patch_size']
             end = start + self.data_loading_config['patch_size']
-            patch = scan_guided[..., start:end].to(self.DEVICE)
+            if self.data_loading_config['slice_axis'] == 0:
+                patch = scan_guided[..., start:end, :, :].to(self.DEVICE)
+            elif self.data_loading_config['slice_axis'] == 1:
+                patch = scan_guided[..., start:end, :].to(self.DEVICE)
+            else:
+                patch = scan_guided[..., start:end].to(self.DEVICE)
             pred = self.stage2(patch).detach().cpu()
             preds.append(pred)
-        pred = torch.cat(preds, dim=-1)
-        pred = pred[..., :D]
-        if self.eval_config['slice_axis'] == 0:
-            pred = pred.permute(0,1,4,3,2)
-        elif self.eval_config['slice_axis'] == 1:
-            pred = pred.permute(0,1,2,4,3)
-            
-        return pred[..., :D]
+        pred = torch.cat(preds, dim=self.data_loading_config['slice_axis'] - 3)
+        if self.data_loading_config['slice_axis'] == 0:
+            pred = pred[..., :D, :, :]
+        elif self.data_loading_config['slice_axis'] == 1:
+            pred = pred[..., :D, :]
+        else:
+            pred = pred[..., :D]
+        
+        return pred
     
-    def infer(self, scan, label):
+    def infer(self, scan):
         scan_guided = self.stage1_infer(scan)
-        label_low_res = self.down_scale(label)
-        label_rescaled = self.up_scale(label_low_res)
-        scan_guided = torch.cat([scan, label_rescaled], dim=1)
         pred = self.stage2_infer(scan_guided)
         return pred

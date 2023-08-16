@@ -1,7 +1,7 @@
 import torch
 from torch.nn import BatchNorm3d
 
-from unet.model.unet_3d import UNet3d
+from unet.model.unet import UNet3d
 from unet.evaluator.evaluator import Evaluator
 from unet.model.double_conv import DoubleConv3d
 
