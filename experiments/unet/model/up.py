@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 from unet.model.double_conv import DoubleConv3d
 
-class Up(nn.Module):
+class Up3d(nn.Module):
     def __init__(self, in_channels, out_channels):
         super().__init__()
         self.up = nn.ConvTranspose3d(in_channels, in_channels // 2, kernel_size=2, stride=2)

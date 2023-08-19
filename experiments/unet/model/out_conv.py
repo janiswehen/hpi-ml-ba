@@ -1,8 +1,8 @@
 import torch.nn as nn
 
-class OutConv(nn.Module):
+class OutConv3d(nn.Module):
     def __init__(self, in_channels, out_channels):
-        super(OutConv, self).__init__()
+        super(OutConv3d, self).__init__()
         self.conv = nn.Conv3d(in_channels, out_channels, kernel_size=1)
 
     def forward(self, x):

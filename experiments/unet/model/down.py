@@ -2,7 +2,7 @@ import torch.nn as nn
 
 from unet.model.double_conv import DoubleConv3d
 
-class Down(nn.Module):
+class Down3d(nn.Module):
     """Downscaling with maxpool then double conv"""
 
     def __init__(self, in_channels, out_channels):

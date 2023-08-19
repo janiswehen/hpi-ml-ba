@@ -1,4 +1,4 @@
-name: "liver-2"
+name: "liver-3"
 data_loading:
   task: "Task03"
   slice_axis: 2 # (*, , )

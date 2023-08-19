@@ -1,6 +1,6 @@
 #!/bin/bash -eux
 
-#SBATCH --job-name=01-train-full
+#SBATCH --job-name=03-train-patch_2
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=janis.wehen@mattermost
 #SBATCH --partition=gpupro
@@ -8,12 +8,12 @@
 #SBATCH --mem=64gb
 #SBATCH --gpus=1
 #SBATCH --time=30:00:00
-#SBATCH --output=logs/01_train_full_%j.log # %j is job id
+#SBATCH --output=logs/03_train_patch_2_%j.log # %j is job id
 
 user="janis.wehen"
 condaenv="ba"
 script_path="/dhc/home/janis.wehen/ba/models/bachelor-project/experiments"
-log_path="/dhc/home/janis.wehen/ba/models/bachelor-project/experiments/logs/01_train_full.log"
+log_path="/dhc/home/janis.wehen/ba/models/bachelor-project/experiments/logs/03_train_patch_2.log"
 
 function source_conda {
     eval "$(conda shell.bash hook)"
@@ -23,7 +23,7 @@ function source_conda {
 
 function train {
     cd $script_path
-    python -m unet.train_model --config configs/training/full_base_config.yaml configs/dataset/task01.yaml > $log_path 2>&1
+    python -m unet.train_model --config configs/training/patch_base_config.yaml configs/dataset/task03.yaml > $log_path 2>&1
 }
 
 source_conda

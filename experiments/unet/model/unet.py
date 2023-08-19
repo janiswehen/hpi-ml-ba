@@ -2,10 +2,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from unet.model.double_conv import DoubleConv3d
-from unet.model.up import Up
-from unet.model.down import Down
-from unet.model.out_conv import OutConv
+from unet.model.double_conv import DoubleConv3d, DoubleConv2d
+from unet.model.up import Up3d, Up2d
+from unet.model.down import Down3d, Down2d
+from unet.model.out_conv import OutConv3d, OutConv2d
 
 
 class UNet3d(nn.Module):
@@ -19,15 +19,15 @@ class UNet3d(nn.Module):
         self.channels = [32, 64, 128, 256, 512]
 
         self.inc = DoubleConv3d(in_channels, self.channels[0])
-        self.down1 = Down(self.channels[0], self.channels[1])
-        self.down2 = Down(self.channels[1], self.channels[2])
-        self.down3 = Down(self.channels[2], self.channels[3])
-        self.down4 = Down(self.channels[3], self.channels[4])
-        self.up1 = Up(self.channels[4], self.channels[3])
-        self.up2 = Up(self.channels[3], self.channels[2])
-        self.up3 = Up(self.channels[2], self.channels[1])
-        self.up4 = Up(self.channels[1], self.channels[0])
-        self.outc = OutConv(self.channels[0], out_channels)
+        self.down1 = Down3d(self.channels[0], self.channels[1])
+        self.down2 = Down3d(self.channels[1], self.channels[2])
+        self.down3 = Down3d(self.channels[2], self.channels[3])
+        self.down4 = Down3d(self.channels[3], self.channels[4])
+        self.up1 = Up3d(self.channels[4], self.channels[3])
+        self.up2 = Up3d(self.channels[3], self.channels[2])
+        self.up3 = Up3d(self.channels[2], self.channels[1])
+        self.up4 = Up3d(self.channels[1], self.channels[0])
+        self.outc = OutConv3d(self.channels[0], out_channels)
 
     def forward(self, x):
         x1 = self.inc(x)
