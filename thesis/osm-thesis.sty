@@ -26,6 +26,7 @@
 \RequirePackage{chngcntr}         % Change the resetting of counters
 \RequirePackage[automark]{scrlayer-scrpage}    % Define and manage page styles
 \RequirePackage{hyperref}         % Extensive support for hypertext in LaTeX
+\RequirePackage{multicol}         % A new bookmark (outline) organization for hyperref
 % \RequirePackage{refcheck}       % Check references (in figures, table, equations, etc)
 \RequirePackage{babel}            % Multilingual support for Plain TeX or LaTeX
 \RequirePackage{csquotes}         % Context sensitive quotation facilities
@@ -62,8 +63,8 @@
 % document options
 \newcommand\bcor{12mm} % <= Bindungskorrektur für Druckversion
 \KOMAoptions{titlepage=firstiscover,open=right,headings=big,numbers=noenddot}
-%\KOMAoptions{DIV=12,fontsize=11pt}
-\KOMAoptions{DIV=10,fontsize=10pt}
+% \KOMAoptions{DIV=12,fontsize=11pt}
+\KOMAoptions{DIV=10,fontsize=12pt}
 \ifisbook %
 	\KOMAoptions{paper=A4,BCOR=\bcor} %
 	\pdfcatalog{/PageLayout/TwoColumnRight} %

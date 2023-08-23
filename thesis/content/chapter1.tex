@@ -1,11 +1,11 @@
 \chapter{Introduction}
 \noindent Medical Imaging is a important tool in model health care, assisting in diagnosis, treatment planing and monitoring of diseases.
-With the advances of deep learning techniques, automated image segmentation has opened up new possibilities in terms of precision and efficiency.
-However, as the volume and resolution of medical images increases, so does the demand of computational power.
+With the advances of deep learning techniques, automated image segmentation has opened up new possibilities in terms of precision and efficiency.\cite[1-2]{zhou_review_2021}
+However, as the volume and resolution of medical images increases, so does the demand of computational power.\cite[1]{wang_super-resolution_2023}
 For Companies and Individuals with low computational resources the challenge thus becomes: How can we maintain high-quality segmentations, while still being memory-efficient?\\
 
 \noindent Among the myriad of deep learning architectures the UNet stands out in the domain of medical image segmentation.
-Originally designed for biomedical image segmentation its unique architecture allows it to incorporate both spacial information and detailed high resolution information to produce detailed segmentations.
+Originally designed for biomedical image segmentation its unique architecture allows it to incorporate both spacial information and detailed high resolution information to produce detailed segmentations.\cite{ronneberger_u-net_2015}
 This makes it ideal for medical image segmentation task where it has to differentiate between tissues and find regions of interest in a MRI scan.
 However, like many deep neural networks, when it is scaled to handle large 3D volumes, like it is often the case with raw MRI scans, the GPU memory consumption can become a bottleneck.
 The aim of this work is to investigate different model adaptations of the UNet that try to meditate this problem.
@@ -39,7 +39,7 @@ The UNet architecture harnesses the inherent strengths of CNNs to its advantage.
 A convolutional layer operates using `filters' or `kernels'. These are small, learnable weight matrices, which move across the input data (such as an image) to produce a feature map, or `convolved feature'.
 The primary idea is that instead of connecting every neuron to every other neuron in consecutive layers (as in fully connected layers),
 a convolutional layer has neurons connected to only a local region in the input, and all neurons share the same weights. This reduces the number of parameters,
-allowing the network to be deeper with fewer parameters.\cite{oshea_introduction_2015}
+allowing the network to be deeper with fewer parameters.\cite[5-7]{oshea_introduction_2015}
 
 \begin{figure}[!hb]
 	\centering
@@ -61,7 +61,7 @@ which are essential for tasks like image classification, object detection, and m
 \subsection{UNet Architecture}
 Building on the foundational principles of Convolutional Neural Networks,
 the U-Net architecture presents a specialized deep learning structure that has proven to be highly effective for tasks like biomedical image segmentation.
-Originally introduced by Olaf Ronneberger, Philipp Fischer, and Thomas Brox in 2015\cite{oshea_introduction_2015}, U-Net addresses challenges unique to medical imaging, such as the need for high-resolution output,
+Originally introduced by Olaf Ronneberger, Philipp Fischer, and Thomas Brox in 2015\cite{ronneberger_u-net_2015}, U-Net addresses challenges unique to medical imaging, such as the need for high-resolution output,
 fewer training samples, and intricate structures.
 
 \begin{figure}[!hb]
@@ -70,13 +70,13 @@ fewer training samples, and intricate structures.
 	\caption{UNet Architecture. Each blue
 	box corresponds to a multi-channel feature map. The number of channels is denoted
 	on top of the box. The x-y-size is provided at the lower left edge of the box. White
-	boxes represent copied feature maps. The arrows denote the different operations.\cite{oshea_introduction_2015}}
+	boxes represent copied feature maps. The arrows denote the different operations.\cite[2]{ronneberger_u-net_2015}}
 	\label{fig:UNet}
 \end{figure}
 
 \noindent The name `U-Net' is derived from its U-shaped architecture.
 This shape essentially consists of two primary parts:
-
+\newpage
 \noindent\textbf{Contracting (Downsampling) Path}\\
 This is the `encoder' and looks very much like a traditional CNN.
 Starting with the input image, this pathway consists of a series of convolutional layers followed by max-pooling layers.
@@ -92,7 +92,7 @@ In this path, the spatial dimensions of the feature maps are gradually increased
 Additionally, at every step of this pathway, there's a crucial skip connection from the corresponding layer in the contracting path.
 This means that the high-resolution features from the downsampling path are concatenated with the upsampled features.
 Such skip connections ensure that the localization information is not lost,
-which is crucial for achieving precise boundaries in segmentation tasks.
+which is crucial for achieving precise boundaries in segmentation tasks.\cite[4]{ronneberger_u-net_2015}
 
 \noindent The final layer of the U-Net is a convolution that maps the multi-channel feature map to the desired number of classes, essentially assigning each pixel of the image to a particular segment.\\
 
@@ -276,11 +276,11 @@ The stopwatch is activated the moment an image is fed into the model and halted 
 the metric encapsulates the time consumed to segment the entirety of the image.
 
 \chapter{Implementation}
-Our project primarily utilizes the PyTorch framework due to its flexibility and widespread adoption in the deep learning community.\\[1ex]
-\textbf{Model}\\
+Our project primarily utilizes the PyTorch framework due to its flexibility and widespread adoption in the deep learning community.
+\section{Model}
 Our foundational architecture was the 3D U-Net. Interestingly, a single class was developed to represent all three U-Net variations. The uniqueness of each U-Net type emerged not in the architectural structure,
-but rather in their distinct training and inference methodologies.\\[1ex]
-\textbf{Dataset Loading with MSDDataset}\\
+but rather in their distinct training and inference methodologies.
+\section{Dataset Loading with MSDDataset}
 To streamline data handling, the MSDDataset class was established. This class serves the pivotal role of loading and preprocessing the Medical Segmentation Decathlon (MSD) datasets.
 One of its primary functions is to interpret the dataset.json file inherent to every MSD dataset. This JSON file delineates dataset attributes such as its type, the significance of input and output channels,
 and the directory paths to the respective images and labels. Upon these directives, the MSDDataset class proceeds to load, normalize, and prepare the datasets for subsequent stages.\\
@@ -293,7 +293,7 @@ To facilitate diverse data transformation requirements, we introduced a suite of
 	its default behavior is to concatenate the first dataset's image with the second dataset's label, thereby formulating a new image-label pair.
 \end{enumerate}
 
-\noindent\textbf{Training Framework}\\
+\section{Training Framework}
 For the training we implemented four trainer classes. Eatch training setup uses data loaders for efficient asynchronous data loading.
 The type of dataset and model requirements dictate our choice of data loader and associated wrappers. Here's a breakdown:
 
@@ -312,9 +312,131 @@ The type of dataset and model requirements dictate our choice of data loader and
 
 The model's training can be started using a dedicated script that accepts configuration files as input. These files are amalgamated into a comprehensive configuration dictionary,
 which in turn drives the initialization of the apt training class.\\[1ex]
-\textbf{Model Evaluation}\\
+\section{Model Evaluation}
 The model can be evaluated using three differen evaluator classes. Eatch evaluator class uses a data loader to load the data.
-For the cascade the two stage are conected together to evaluate the performance of the entire cascade.
+For the cascade the two stage are conected together to evaluate the performance of the entire cascade. Every results during training and evaluation are logged using Weights and Biasis.
 
 \chapter{Experimental Results}
 
+In our journey to improve and adapt the U-Net architecture, it's crucial to see how well our changes work in practice. In this chapter,
+we present the results garnered from our experiments, which provide a clear picture of the advantages, trade-offs, and potential areas of improvement associated with our implementations.
+The first Dataset we trained our models on was the Brain Tumor dataset.
+
+\begin{table}[ht!]
+\begin{center} {\footnotesize
+\begin{tabular}{lccc}
+\hline
+	& \multicolumn{3}{c}{Brain Tumor Dataset accuracy} \\
+	& \multicolumn{1}{c}{edema} & \multicolumn{1}{c}{non-enhancing tumor} & \multicolumn{1}{c}{enhancing tumor}\\
+\hline
+3D UNet & $\mathbf{80.13}$ & $\mathbf{60.80}$ & $\mathbf{75.99}$ \\[1ex]
+patch-wise UNet & $70.01$ & $31.02$ & $55.58$ \\[1ex]
+patch-wise UNet cascade & $77.54$ & $56.84$ & $71.18$ \\[1ex]
+\hline
+\end{tabular} }
+\end{center}
+\caption{\footnotesize This table shows the mean dice scores for the Test split of the Brain Tumor dataset. The best scores are highlighted in bold.}
+\label{turns}
+\end{table}
+
+\noindent The 3D UNet demonstrates superior performance in all metrics. While the patch-wise UNet has the least impressive results across categories,
+the patch-wise UNet cascade fares better. Notably, it surpasses the patch-wise UNet considerably and even approaches the 3D UNet's precision.
+Inspecting the results we notice that all models struggle to segment more fine structures like the non-enhancing tumor.\\
+
+\begin{table}[ht!]
+\begin{center} {\footnotesize
+\begin{tabular}{lccc}
+\hline
+	& \multicolumn{2}{c}{Brain Tumor Dataset efficiency} \\
+	& \multicolumn{1}{c}{GPU memory(GB)} & \multicolumn{1}{c}{inference time(s)} \\
+\hline
+3D UNet & $21.5$ & $\mathbf{0.35}$ \\[1ex]
+patch-wise UNet & $2.9$ & $0.67$ \\[1ex]
+patch-wise UNet cascade & $\mathbf{2.8}$ & $0.91$\\[1ex]
+\hline
+\end{tabular} }
+\end{center}
+\caption{\footnotesize This table shows the mean inference time for the Test split of the Brain Tumor dataset over 30 epochs in seconds and the max GPU memory consumption in GB.
+The best scores are highlighted in bold.}
+\label{turns}
+\end{table}
+
+The standard 3D UNet is the most demanding in terms of GPU memory. Intriguingly, the patch-wise UNet cascade consumes less memory than its standard counterpart,
+even though it inherently incorporates the patch-wise UNet. In terms of inference time, the 3D UNet shines the brightest, whereas the cascade model lags behind the standard patch-wise model probably due to its two-stage processing.\\[1ex]
+Let us now take a look at the results for Liver dataset.
+
+\begin{table}[ht!]
+\begin{center} {\footnotesize
+\begin{tabular}{lccc}
+\hline
+	& \multicolumn{2}{c}{Liver Dataset accuracy} \\
+	& \multicolumn{1}{c}{liver} & \multicolumn{1}{c}{cancer} \\
+\hline
+3D UNet & $-$ & $-$ \\[1ex]
+patch-wise UNet & $87.01$ & $22.22$ \\[1ex]
+patch-wise UNet cascade & $\mathbf{92.00}$ & $\mathbf{25.05}$ \\[1ex]
+\hline
+\end{tabular} }
+\end{center}
+\caption{\footnotesize This table shows the mean dice scores for the Test split of the Liver dataset. The best scores are highlighted in bold.}
+\label{turns}
+\end{table}
+
+The patch-wise UNet cascade claims the top spot for performance on the Liver dataset. The 3D UNet, on the other hand, was not able to produce any results doe to the extensive voxel count.
+When focusing on segmenting cancer, the models showed room for improvement. However, liver segmentation showed promising results.
+
+\begin{table}[ht!]
+\begin{center} {\footnotesize
+\begin{tabular}{lccc}
+\hline
+	& \multicolumn{2}{c}{Liver Dataset efficiency} \\
+	& \multicolumn{1}{c}{GPU memory(GB)} & \multicolumn{1}{c}{inference time(s)} \\
+\hline
+3D UNet & $\geq325$ & $-$ \\[1ex]
+patch-wise UNet & $\mathbf{10.6}$ & $\mathbf{4.49}$ \\[1ex]
+patch-wise UNet cascade & $12.4$ & $5.90$\\[1ex]
+\hline
+\end{tabular} }
+\end{center}
+\caption{\footnotesize This table shows the mean inference time for the Test split of the Liver dataset over 30 epochs in seconds and the max GPU memory consumption in GB. The best scores are highlighted in bold.}
+\label{turns}
+\end{table}
+
+When it comes to the Liver dataset we encountered some problems. The 3D UNet was not able to train on the Liver dataset due to the large voxel count.
+The training process would run out of memory when the model tryed to allocate 325 GB of GPU memory.
+The patch-wise UNet, though trainable, initially produced only background segmentations.
+We pinpointed the inclusion of the background channel in the loss calculation as the culprit. By excluding this channel,
+the model's training performance improved significantly. Given the 3D UNet's memory requirements,
+this model isn't a feasible choice even for high-end GPUs like the A100. Implementing it across multiple GPUs might be a solution, but it brings its own set of challenges.
+Conversely, both patch-wise models prove to be adaptable choices for conventional GPUs with 16 GB or more memory.
+
+\chapter{Discussion}
+In this section, we dive into the implications of our experimental findings, addressing both the strengths and constraints of our study, along with potential avenues for further refinement.\\
+Our results from the Brain Tumor dataset indicate that the 3D UNet stands out in terms of accuracy. However, this prowess is accompanied by increased GPU memory demands.
+This isn't an issue for datasets with moderate voxel counts, such as the Brain Tumor dataset, but it emerges as a constraint for voluminous datasets like the Liver dataset.\\
+Assuming the GPU memory consumption scales linearly with voxel count (a plausible assumption given the linear scaling of all convolutional layers),
+an average scan from the liver dataset would necessitate a memory allocation of approximately $\frac{21,5~\text{GB} * 117.340.457}{8.928.000}\approx282~\text{GB}$.
+For the inaugural Liver dataset scan, which was halted because of an attempted 325 GB allocation, the scan's size was $512\times512\times771$,
+resulting in an estimated memory demand of $\frac{21,5~\text{GB} * 512*512*771}{8.928.000}\approx486~\text{GB}$. This far exceeds the capacity of a single GPU.
+To illustrate, NVIDIA's A100 offers a peak memory of $100~\text{GB}$, and even this premium GPU falls short. Addressing this would necessitate employing multiple GPUs,
+bringing the added complexity of multi-GPU support.\\
+Our findings posit the patch-wise UNet and its cascade counterpart as promising alternatives.
+Notably, the cascade variant has longer infernece time then the normal patch-wise UNet and is more complex to train since one has to tain two networks. However,
+this cascade structure elevates the accuracy of the model by far, making it compatible to the normal UNet. When pitted against the cascade,
+the sole advantages of the standard patch-wise UNet are its swifter inference times and simpler implementation. Given these trade-offs,
+we advocate for the patch-wise UNet cascade over its simpler counterpart in most scenarios.\\
+For datasets comprising low-resolution images, the original 3D UNet remains the gold standard due to its superior speed and accuracy.
+Yet, when tackling high-resolution imagery, the patch-wise UNet cascade emerges as a worthy contender.\\
+While our models have demonstrated potential, there remains a significant gap between our results and the benchmarks set by contemporary studies.
+For context, in the nnUNet paper, competitors of the MSD achieved a dice score of $73.71$ for cancer detection in the Liver dataset.
+When juxtaposed with our dice score of $25.05$ for the same task, the disparity is evident: our models are not yet on par with the best in the field.
+Several strategies could bridge this gap:
+\begin{enumerate}
+	\item \textbf{Data Augmentation}: Introducing variations in the training data through techniques like rotation, scaling, and flipping can make our model more robust and potentially improve its generalization capability.
+	\item \textbf{Focusing on the Region of Interest}: In the preprocessing phase, cropping images to highlight the region of interest can ensure the model's training focuses more intently on the salient data, potentially improving accuracy.
+	\item \textbf{Leveraging Pre-training}: Training our model on diverse datasets before fine-tuning it on the specific dataset of interest can provide a more generalized feature representation,
+	which might boost performance when the model is subsequently fine-tuned. Unsupervised learning techniques could also be employed to generate a more robust feature representation.
+\end{enumerate}
+By integrating these strategies, we belive to be able to enhance our model's performance and bring it closer to the state-of-the-art benchmarks in future iterations.
+Other interesting further investigations could be to compare the patch-wise UNet cascade to outher models that try to address the memory efficiency problem. One outher woerthy contestent could be a memory efficient alternative to the 3D UNet,
+is the Patch-free Segmentation model proposed in this paper\cite{wang_super-resolution_2023}.
