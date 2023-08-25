@@ -2,7 +2,14 @@
 \begin{otherlanguage}{english}
 \begin{center}\textsf{\textbf{\abstractname}}\end{center}
 
-\noindent Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
-
+\noindent Deep learning has brought significant advancements in medical imaging,
+with the U-Net model being a popular choice for image segmentation.
+However, the 3D U-Net often needs a lot of computer memory, especially when working with large images.
+This thesis focuses on modifying the U-Net design to use less memory without losing much accuracy.
+We study two main designs: the patch-wise U-Net and the patch-wise U-Net cascade.
+Our tests on the Brain Tumor and Liver datasets show that while the regular 3D U-Net is best in terms of accuracy it is
+not feasible to use it for images with a large voxel count since it uses up too mutch GPU memory.
+The patch-wise U-Net cascade shows to be a promising alternative for larger images that is less demanding on GPU memory resources.
+This work offers a path forward for using advanced image processing in situations where computer resources are limited.
 \end{otherlanguage}
 \vfil\null

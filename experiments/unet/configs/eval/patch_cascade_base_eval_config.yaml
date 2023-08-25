@@ -11,7 +11,7 @@ model_loading:
   path1: "final/cascade1-unet/brain_tumor_unet_weights.pth"
   path2: "final/cascade2-unet/brain_tumor_unet_weights.pth"
 eval:
-  n_steps: 200 # epoch * (n_samples / batch_size)
+  n_steps: 2000 # epoch * (n_samples / batch_size)
   slice_axis: 2
 logging:
   enabled: True

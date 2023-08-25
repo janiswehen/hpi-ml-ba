@@ -10,7 +10,7 @@ model_loading:
   enabled: False
   path: ""
 training:
-  n_steps: 70000 # n_epoch * n_samples
+  n_steps: 90000 # n_epoch * n_samples
   learning_rate: 0.0001
 logging:
   enabled: True
