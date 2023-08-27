@@ -2,7 +2,16 @@
 \begin{otherlanguage}{ngerman}
 \begin{center}\textsf{\textbf{\abstractname}}\end{center}
 
-\noindent Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
-
+\noindent Mit hilfe von Deep Learning sind im Bereich der medizinischen Bildgebung bedeutende Fortschritte gelungen,
+wobei das U-Net Modell als eine der bevorzugten Methoden für die Bildsegmentierung bekannt ist.
+Das $3$D U-Net weist jedoch oft einen hohen GPU-Speicherbedarf auf, besonders bei der Verarbeitung großer $3$D-Bilddaten.
+Diese Studie zielt darauf ab, die U-Net Struktur so anzupassen, dass sie weniger Speicher verbraucht,
+ohne erheblich an Genauigkeit einzubüßen. Hierbei stehen zwei Modellvarianten des U-Nets im Fokus:
+das `patch-wise U-Net' und die `patch-wise U-Net cascade'. Vergleichstests anhand der Datensätze `Brain Tumor'
+und `Liver' haben ergeben, dass das herkömmliche $3$D U-Net in puncto Genauigkeit führend ist.
+Allerdings erweist es sich bei Bildern mit hoher Voxelanzahl als nicht umsetzbar aufgrund des exzessiven GPU-Speicherverbrauchs.
+Das `patch-wise U-Net cascade' stellt sich als eine vielversprechende Alternative heraus, speziell für hochaufgelöste Bilder,
+da es effizienter in Bezug auf den GPU-Verbrauch ist.
+Dieser Ansatz ermöglicht fortschrittliche Bildsegmentierungen auch bei eingeschränkten Rechenkapazitäten.
 \end{otherlanguage}
 \vfil\null
