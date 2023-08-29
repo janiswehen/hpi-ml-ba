@@ -21,7 +21,7 @@ after which it produces segmentations for review. Medical professionals can then
 This iterative process continues until the segmentations achieve the desired level of accuracy and precision. A defining strength of this system is its capability to streamline the segmentation process.
 The machine learning model not only delivers a robust starting point but continues to provide enhanced suggestions as the cycle progresses, enabling medical experts to work with heightened efficiency.\\[1ex]
 Moreover, acknowledging the sensitive nature of medical data, the platform has been architected to operate locally on the user's machine, ensuring data privacy and security.
-Such a design consideration brings forth its own set of challenges, particularly in the realm of computational capabilities.
+Such a design consideration presents its own set of challenges, especially in the realm of computational capabilities.
 Given that many users might not have access to multiple high-end GPUs and that consumer-grade GPUs often feature limited memory capacity, there is an imperative to optimize our models for memory efficiency,
 ensuring wide accessibility and functionality across diverse hardware configurations.
 
@@ -30,14 +30,14 @@ Before delving into the specific adaptations we've made to the U-Net architectur
 Tackling the challenges of large datasets and the associated memory consumption is a widespread concern,
 and various strategies, such as the following, have been proposed:
 \begin{enumerate}
-	\item \textbf{Model Pruning}: This technique involves removing certain neurons or weights that contribute minimally to the model's predictive power.
+	\item \textbf{Model Pruning}: This technique involves removing certain weights that contribute minimally to the model's predictive power.
 	Pruned models often retain their performance, or only slightly degrade, while being much more lightweight\cite{chong_resource_2023}.
 	\item \textbf{Quantization}: By representing model parameters with fewer bits, quantization reduces the memory footprint of the model. Typically,
 	weights in neural networks are stored as $32$-bit floats. Through quantization, these can be represented with just $8$ bits (or even less), leading to considerable memory savings\cite{gholami_survey_2021}.
 	\item \textbf{Memory-efficient Backpropagation}: Traditional backpropagation in training deep networks can be memory-intensive due to the storage of intermediate values for gradient computation.
 	New approaches, such as reversible backpropagation, allow for recomputation of these values, trading off computation time for memory savings\cite{brugger_partially_2019}.
 \end{enumerate}
-While these methods provide a comprehensive toolkit for memory efficiency, our exploration zeroes in on the model topology, specifically adaptations to the U-Net architecture.
+Although these techniques offer a comprehensive set of tools for optimizing memory utilization, our investigation focuses on the model topology, specifically adaptations to the U-Net architecture.
 As we'll see, adjusting the architecture can lead to notable memory efficiency increases.
 
 \section{U-Net}
@@ -56,7 +56,7 @@ allowing the network to be deeper with fewer parameters\cite[5-7]{oshea_introduc
 \begin{figure}[!hb]
 	\centering
 	\includegraphics[width=0.4\linewidth]{images/Convolution}
-	\caption{Convolutional Layer. The picture depicts a $3\times3$ kernel, that is convolved over a $5\times5$ image (input). Producing a $5\times5$ feature map (output).}
+	\caption{Convolutional Layer. The picture depicts a $3\times3$ kernel, that is convolved over a $8\times8$ image (input). Producing a $8\times8$ feature map (output) using zero padding.}
 	\label{fig:Conv}
 \end{figure}
 
@@ -155,7 +155,7 @@ all while maintaining the advantages of a two-stage refinement. This revised cas
 \chapter{Methodology}
 In this work, we focused on a competitive analysis of three medical segmentation models with the objective of assessing the tradeoffs between performance, inference time and memory efficiency.
 For the models, we focus on different variations of the U-Net architecture. The models employed for the training and evaluation include the use of normal $3$D U-Net, patch-wise U-Net,
-patch-wise U-Net cascade. For a comparative analysis, we implemented them in PyTorch and trained them on some of the Medical Segmentation Decathlon (MSD) datasets.\\
+patch-wise U-Net cascade. For a comparative analysis, we implemented them in Python using PyTorch and trained them on some of the Medical Segmentation Decathlon (MSD) datasets.\\
 
 \section{Data Collection and Preparation}
 The first section of the methodology revolves around the selection and conditioning of datasets employed in model training and evaluation.
@@ -240,7 +240,7 @@ As a result, the cascade U-Net is anticipated to deliver more accurate results t
 
 \section{Environment and Tools}
 All model training and evaluation were conducted using an NVIDIA A$40$ GPU with $48$GB of GPU memory. The experiments operated under a Linux Ubuntu $20.04$ amd$64$ environment. For the model's implementation,
-we utilized the PyTorch framework.
+we utilized the PyTorch(version 2.0.1) framework.
 
 \section{Training}
 As the training process is a crucial component of our investigation, we elaborate on the training methodology in this section.
