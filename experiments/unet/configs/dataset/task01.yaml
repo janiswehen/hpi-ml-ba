@@ -1,4 +1,4 @@
-name: "brain_tumor"
+name: "brain_tumor_eval"
 data_loading:
   task: "Task01"
   slice_axis: 1 # (*, , )

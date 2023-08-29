@@ -5,6 +5,7 @@ import wandb
 from torch.utils.data import DataLoader
 from monai.losses import DiceLoss
 from math import floor
+import csv
 
 from unet.dataset.msd_dataset import MSDDataset, Split, MSDTask
 
@@ -47,7 +48,8 @@ class Evaluator():
         self.epochs = self.eval_config['n_steps'] // len(self.dataset)
 
         self.initModel()
-        self.loss_fn = DiceLoss(softmax=True, include_background=False)
+        self.loss_fn = DiceLoss(softmax=True, include_background=False, reduction='none')
+        self.softmax = torch.nn.Softmax(dim=1)
 
     def initModel(self):
         raise NotImplementedError
@@ -61,7 +63,8 @@ class Evaluator():
         wandb_images = []
         for i in range(self.logging_config['prediction_log_count']):
             scan, ground_trouth = self.dataset[i]
-            pred = self.infer(scan.unsqueeze(0))[0]
+            pred = self.infer(scan.unsqueeze(0))
+            pred = self.softmax(pred)[0]
 
             class_labels = self.dataset.class_labels
 
@@ -85,9 +88,16 @@ class Evaluator():
             ))
         wandb.log({"predictions": wandb_images})
 
+    def write_csv(self, losses, infer_times):
+        with open(f'./csv-logs/{self.run_name}-{self.MODEL_TYPE}-{self.task.value[0]}', 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile, delimiter=',')
+            writer.writerow([f'loss_{self.dataset.class_labels[i+1]}' for i in range(len(losses))] + ['infer_time'])
+            for values in zip(*losses, infer_times):
+                writer.writerow([*values])
+
     def evaluate(self):
         self.log_predictions()
-        losses = []
+        losses = [[] for _ in range(1, self.dataset.chanels[1])]
         infer_times = []
         for epoch in range(self.epochs):
             loop = tqdm.tqdm(
@@ -99,16 +109,21 @@ class Evaluator():
                 pred = self.infer(scan)
                 end = time.time()
                 loss = self.loss_fn(pred, label)
-                losses.append(loss.item())
+                loss = torch.reshape(loss, (-1,))
+                for i in range(len(loss)):
+                    losses[i].append(loss[i].item())
                 infer_times.append(end - start)
                 if self.logging_config['enabled'] == True:
-                    wandb.log({'step_loss': loss.item()})
+                    for i in range(len(loss)):
+                        wandb.log({f'step_loss_{self.dataset.class_labels[i+1]}': loss[i].item()})
                     wandb.log({'step_time': end - start})
 
         max_memory = torch.cuda.max_memory_allocated(self.DEVICE) / pow(10,9)
-        loss = sum(losses) / len(losses)
+        self.write_csv(losses, infer_times)
+        loss = [sum(losses[i]) / len(losses[i]) for i in range(len(losses))]
         infer_time = sum(infer_times) / len(infer_times)
         if self.logging_config['enabled'] == True:
-            wandb.log({'loss': loss})
+            for i in range(len(loss)):
+                wandb.log({f'loss_{self.dataset.class_labels[i+1]}': loss[i]})
             wandb.log({'time': infer_time})
             wandb.log({'max_memory': max_memory})

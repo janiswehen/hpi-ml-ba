@@ -2,10 +2,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from unet.model.double_conv import DoubleConv3d, DoubleConv2d
-from unet.model.up import Up3d, Up2d
-from unet.model.down import Down3d, Down2d
-from unet.model.out_conv import OutConv3d, OutConv2d
+from unet.model.double_conv import DoubleConv3d
+from unet.model.up import Up3d
+from unet.model.down import Down3d
+from unet.model.out_conv import OutConv3d
 
 
 class UNet3d(nn.Module):

@@ -33,6 +33,7 @@ class PatchCascadeUnetEvaluator(Evaluator):
         scan_low_res = self.down_scale(scan).to(self.DEVICE)
         pred_low_res = self.stage1(scan_low_res).detach().cpu()
         pred_low_res = self.one_hot_arg_max(pred_low_res)
+        self.up_scale.size = scan.shape[-3:]
         pred = self.up_scale(pred_low_res)
         scan_guided = torch.cat([scan, pred], dim=1)
         return scan_guided

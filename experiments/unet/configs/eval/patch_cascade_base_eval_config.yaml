@@ -1,6 +1,6 @@
 model_type: "patch_cascade_unet"
 data_loading:
-  n_workers: 0
+  n_workers: 9
   patch_size: 16
   split_ratio:
     train: 0.6
@@ -8,10 +8,10 @@ data_loading:
     test: 0.2
   seed: 42
 model_loading:
-  path1: "final/cascade1-unet/brain_tumor_unet_weights.pth"
-  path2: "final/cascade2-unet/brain_tumor_unet_weights.pth"
+  path1: "final/cascade1-unet/liver_unet_weights.pth"
+  path2: "final/cascade2-unet/liver_unet_weights.pth"
 eval:
-  n_steps: 2000 # epoch * (n_samples / batch_size)
+  n_steps: 800 # epoch * (n_samples / batch_size)
   slice_axis: 2
 logging:
   enabled: True
